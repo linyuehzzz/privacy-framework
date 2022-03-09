@@ -263,12 +263,12 @@ def risks(I, K, V, A, m, hist, hist2, hist3):
 
     v = 0
     A2 = hist2.iloc[:,1:].to_numpy()
-    for k in range(K2):
+    for k2 in range(K2):
         for i in range(I):
             if A2[i, k2] == 1 and theta2_all[i, i, k2] == 1:
                 v += 1
     print("Unique prob (E*R): ", np.sum(v) / (I * K2))
-    phi2 = np.sum(v) / (I * K)
+    phi2 = np.sum(v) / (I * K2)
 
 
     # RACE (7)
@@ -312,12 +312,12 @@ def risks(I, K, V, A, m, hist, hist2, hist3):
 
     v = 0
     A3 = hist3.iloc[:,1:].to_numpy()
-    for k in range(K3):
+    for k3 in range(K3):
         for i in range(I):
             if A3[i, k3] == 1 and theta3_all[i, i, k3] == 1:
                 v += 1
     print("Unique prob (R): ", np.sum(v) / (I * K3))
-    phi3 = np.sum(v) / (I * K)
+    phi3 = np.sum(v) / (I * K3)
 
     return tau1, tau2, tau3, phi1, phi2, phi3, K2, K3, theta_all, theta2_all, theta3_all, A2, A3
 
@@ -389,7 +389,7 @@ def utility(I, K, K2, K3, V, A, A2, A3, theta_all, theta2_all, theta3_all):
 nj = 20
 r = [1, 2, 3]
 cov = [1, 2]
-p = [0.001, 0.01, 0.1]
+p = [0.05, 0.1, 0.5, 1]
 
 
 hist = read_data()
