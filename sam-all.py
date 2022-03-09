@@ -178,10 +178,11 @@ def max_coverage(I, K, V, T, A, W, nj, p):
         if len(V[k]) == 0:
             continue
         for i in V[k]:
-            m.addConstr(quicksum(theta[i, j, k] for j in range(I)) <= 1)
+            m.addConstr(quicksum(theta[i, j, k] for j in range(I)) == 1)
+            m.addConstr(theta[i, i, k] + quicksum(T[i, j, k] * theta[i, j, k] for j in range(I)) == 1)
     for j in range(I):
-        m.addConstr(quicksum(quicksum(theta[i, j, k] * A[i, k] for i in V[k]) for k in range(K)) <= nj)
-    m.addConstr(quicksum(quicksum(quicksum(W[i, j, k] * theta[i, j, k] * A[i, k] for i in V[k]) for k in range(K)) for j in range(I)) <= p)
+        m.addConstr(quicksum(quicksum(theta[i, j, k] * T[i, j, k] * A[i, k] for i in V[k]) for k in range(K)) <= nj)
+    m.addConstr(quicksum(quicksum(quicksum(W[i, j, k] * T[i, j, k] * theta[i, j, k] * A[i, k] for i in V[k]) for k in range(K)) for j in range(I)) <= p)
     m.setObjective(obj, GRB.MAXIMIZE)
     m.update()
     m.optimize()
