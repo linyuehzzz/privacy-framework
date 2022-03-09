@@ -322,33 +322,21 @@ def risks(I, K, V, A, m, hist, hist2, hist3):
     return tau1, tau2, tau3, phi1, phi2, phi3, K2, K3, theta_all, theta2_all, theta3_all, A2, A3
 
 
-def utility(I, K, K2, K3, V, A, A2, A3, theta_all, theta2_all, theta3_all):
+def smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all):
     # VOTINGAGE (2) $*$ HISPANIC (2) $*$ RACE (7)
     delta = np.empty([I, K])
-    delta_p = np.empty([I, I, K])
     for k in range(K):
         for i in range(I):
             sum = 0
             for j in range(I):
-                if i in V[k]:
-                    # percentage error
-                    if A[j, k] == 0:
-                        W = 50
-                    else:
-                        W = 1 / A[i, k] + 1 / A[j, k]
-                    delta_p[i, j, k] = theta_all[i, j, k] * A[i, k] * W
-
                 if i != j:
                     sum += theta_all[j, i, k] * A[j, k]
             new = theta_all[i, i, k] * A[i, k] + sum
             delta[i, k] = abs(A[i, k] - new) / (A[i, k] + new)
 
     delta[~np.isfinite(delta)] = 0
-    delta_p[~np.isfinite(delta_p)] = 0
     print("SMAPE: ", np.sum(delta) / (I * K))
-    print("P-MAPE: ", np.sum(delta_p) / (I * K))
     smape1 = np.sum(delta) / (I * K)
-    p_mape = np.sum(delta_p) / (I * K)
 
 
     # HISPANIC (2) $*$ RACE (7)
@@ -380,8 +368,33 @@ def utility(I, K, K2, K3, V, A, A2, A3, theta_all, theta2_all, theta3_all):
     print("SMAPE: ", np.sum(delta3) / (I * K3))
     smape3 = np.sum(delta3) / (I * K3)
 
-    return smape1, smape2, smape3, p_mape
+    return smape1, smape2, smape3
 
+
+def pmape_1(I, K, V, A, W, theta_all):
+    delta_p = np.empty([I, I, K])
+    for k in range(K):
+        for i in range(I):
+            for j in range(I):
+                if i in V[k]:
+                    delta_p[i, j, k] = theta_all[i, j, k] * A[i, k] * W[i, j, k]
+    delta_p[~np.isfinite(delta_p)] = 0
+    print("P-MAPE: ", np.sum(delta_p) / (I * K))
+    p_mape = np.sum(delta_p) / (I * K)
+    return p_mape
+
+
+def pmape_2(I, K, V, A, W, theta_all):
+    delta_p = np.empty([I, I, K])
+    for k in range(K):
+        for i in range(I):
+            for j in range(I):
+                if i in V[k]:
+                    delta_p[i, j, k] = W[i, j, k] * T[i, j, k] * theta_all[i, j, k] * A[i, k]
+    delta_p[~np.isfinite(delta_p)] = 0
+    print("P-MAPE: ", np.sum(delta_p) / (I * K))
+    p_mape = np.sum(delta_p) / (I * K)
+    return p_mape
 
 
 
@@ -389,7 +402,7 @@ def utility(I, K, K2, K3, V, A, A2, A3, theta_all, theta2_all, theta3_all):
 nj = 20
 r = [1, 2, 3]
 cov = [1, 2]
-p = [0.05, 0.1, 0.5, 1]
+p = [0.05, 0.1, 0.5, 1, 1.5, 2]
 
 
 hist = read_data()
@@ -409,7 +422,8 @@ with open('set_coverage.csv', 'w') as fw:
         m = set_coverage(I, K, V, T, A, W, nj)
 
         tau1, tau2, tau3, phi1, phi2, phi3, K2, K3, theta_all, theta2_all, theta3_all, A2, A3 = risks(I, K, V, A, m, hist, hist2, hist3)
-        smape1, smape2, smape3, p_mape = utility(I, K, K2, K3, V, A, A2, A3, theta_all, theta2_all, theta3_all)
+        smape1, smape2, smape3 = smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all)
+        p_mape = pmape_1(I, K, V, A, W, theta_all)
 
         fw.write(str(i) + ',' + str(j) + ',' + "VER" + ',' + str(p_mape) + ',' + str(tau1) + ',' + str(phi1) + ',' + str(smape1) + '\n')
         fw.write(str(i) + ',' + str(j) + ',' + "ER" + ',,' + str(tau2) + ',' + str(phi2) + ',' + str(smape2) + '\n')
@@ -431,7 +445,8 @@ with open('max_coverage.csv', 'w') as fw:
             m = max_coverage(I, K, V, T, A, W, nj, k*I*K)
 
             tau1, tau2, tau3, phi1, phi2, phi3, K2, K3, theta_all, theta2_all, theta3_all, A2, A3 = risks(I, K, V, A, m, hist, hist2, hist3)
-            smape1, smape2, smape3, p_mape = utility(I, K, K2, K3, V, A, A2, A3, theta_all, theta2_all, theta3_all)
+            smape1, smape2, smape3 = smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all)
+            p_mape = pmape_2(I, K, V, A, W, theta_all)
 
             fw.write(str(i) + ',' + str(j) + ',' + str(k) + ',' + "VER" + ',' + str(p_mape) + ',' + str(tau1) + ',' + str(phi1) + ',' + str(smape1) + '\n')
             fw.write(str(i) + ',' + str(j) + ',' + str(k) + ',' + "ER" + ',,' + str(tau2) + ',' + str(phi2) + ',' + str(smape2) + '\n')
