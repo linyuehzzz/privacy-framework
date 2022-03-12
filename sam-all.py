@@ -409,7 +409,7 @@ hist = read_data()
 hist2, hist3 = aggregate(hist)
 
 with open('set_coverage.csv', 'w') as fw:
-  fw.write('k,coverage,predicate,p_mape,risk_1,risk_2,smape\n')
+  fw.write('lambda,coverage,predicate,p_mape,risk_1,risk_2,smape\n')
   fw.flush()
 
   for i in r:
@@ -431,7 +431,7 @@ with open('set_coverage.csv', 'w') as fw:
         fw.flush()
 
 with open('max_coverage.csv', 'w') as fw:
-  fw.write('k,coverage,u,predicate,p_mape,risk_1,risk_2,smape\n')
+  fw.write('lambda,coverage,u,predicate,p_mape,risk_1,risk_2,smape\n')
   fw.flush()
 
   for i in r:
