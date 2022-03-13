@@ -140,18 +140,12 @@ def set_coverage(I, K, V, T, A, W, nj):
                 # m.update()
                 # objective
                 obj += theta[i, j, k] * A[i, k] * W[i, j, k]
-    # print("decision variables done")
-    m.setObjective(obj, GRB.MINIMIZE)
-    # add constraints
-    for k in range(K):
-        if len(V[k]) == 0:
-            continue
-        for i in V[k]:
+            # add constraints
             m.addConstr(quicksum(theta[i, j, k] for j in range(I)) == 1)
             m.addConstr(quicksum(T[i, j, k] * theta[i, j, k] for j in range(I)) == 1)
     for j in range(I):
         m.addConstr(quicksum(quicksum(theta[i, j, k] * A[i, k] for i in V[k]) for k in range(K)) <= nj)
-    # print("constraints done")
+    m.setObjective(obj, GRB.MINIMIZE)
     m.update()
     m.optimize()
     return m
@@ -173,11 +167,7 @@ def max_coverage(I, K, V, T, A, W, nj, p):
             for j in range(I):
                 theta[i, j, k] = m.addVar(vtype=GRB.CONTINUOUS, lb=0, ub=1, name="theta_%d_%d_%d"%(i, j, k))
                 obj += T[i, j, k] * theta[i, j, k] * A[i, k]
-    # add constraints
-    for k in range(K):
-        if len(V[k]) == 0:
-            continue
-        for i in V[k]:
+            # add constraints
             m.addConstr(quicksum(theta[i, j, k] for j in range(I)) == 1)
             m.addConstr(theta[i, i, k] + quicksum(T[i, j, k] * theta[i, j, k] for j in range(I)) == 1)
     for j in range(I):
@@ -202,12 +192,12 @@ def risks(I, K, V, A, m, hist, hist2, hist3):
 
     p = np.ones([I, K])
     for k in range(K):
-        for i in range(I):
+        for j in range(I):
             sum = 0
-            for j in range(I):
+            for i in V[k]:
                 if i != j:
-                    sum += theta_all[j, i, k] * A[j, k]
-            p[i, k] = theta_all[i, i, k] / (theta_all[i, i, k] * A[i, k] + sum)
+                    sum += theta_all[i, j, k] * A[i, k]
+            p[j, k] = theta_all[j, j, k] / (theta_all[j, j, k] * A[j, k] + sum)
     p[~np.isfinite(p)] = 0
     print("Identification prob (VA*E*R): ", np.sum(p) / p.size)
     tau1 = np.sum(p) / p.size
@@ -238,25 +228,21 @@ def risks(I, K, V, A, m, hist, hist2, hist3):
             for j in range(I):
                 sum1, sum2 = 0, 0
                 for k in range(K):
-                    if A[i, k] == 0:
-                        q = 0
-                    else:
-                        q = Q2[k2, k]
-                    sum1 += q * theta_all[i, j, k]
-                    sum2 += q
+                    sum1 += Q2[k2, k] * theta_all[i, j, k] * A[i, k]
+                    sum2 += Q2[k2, k] * A[i, k]
                 theta2_all[i, j, k2] = sum1 / sum2                
     theta2_all[~np.isfinite(theta2_all)] = 0
 
     p = np.ones([I, K2])
     for k2 in range(K2):
-        for i in range(I):
+        for j in range(I):
             sum = 0
             for k in range(K):
-                sum += Q2[k2, k] * theta_all[i, i, k] * A[i, k] 
-                for j in range(I):
+                sum += Q2[k2, k] * theta_all[j, j, k] * A[j, k] 
+                for i in V[k]:
                     if i != j:
-                        sum += Q2[k2, k] * theta_all[j, i, k] * A[j, k]
-            p[i, k2] = theta2_all[i, i, k2] / sum
+                        sum += Q2[k2, k] * theta_all[i, j, k] * A[i, k]
+            p[j, k2] = theta2_all[j, j, k2] / sum
     p[~np.isfinite(p)] = 0
     print("Identification prob (E*R): ", np.sum(p) / p.size)
     tau2 = np.sum(p) / p.size
@@ -287,25 +273,21 @@ def risks(I, K, V, A, m, hist, hist2, hist3):
             for j in range(I):
                 sum1, sum2 = 0, 0
                 for k in range(K):
-                    if A[i, k] == 0:
-                        q = 0
-                    else:
-                        q = Q3[k3, k]
-                    sum1 += q * theta_all[i, j, k]
-                    sum2 += q
-                theta3_all[i, j, k3] = sum1 / sum2               
-    theta3_all[~np.isfinite(theta3_all)] = 0       
+                    sum1 += Q3[k3, k] * theta_all[i, j, k] * A[i, k]
+                    sum2 += Q3[k3, k] * A[i, k]
+                theta3_all[i, j, k3] = sum1 / sum2                
+    theta3_all[~np.isfinite(theta3_all)] = 0 
 
     p = np.ones([I, K3])
     for k3 in range(K3):
-        for i in range(I):
+        for j in range(I):
             sum = 0
             for k in range(K):
-                sum += Q3[k3, k] * theta_all[i, i, k] * A[i, k] 
-                for j in range(I):
+                sum += Q3[k3, k] * theta_all[j, j, k] * A[j, k] 
+                for i in V[k]:
                     if i != j:
-                        sum += Q3[k3, k] * theta_all[j, i, k] * A[j, k]
-            p[i, k3] = theta3_all[i, i, k3] / sum
+                        sum += Q3[k3, k] * theta_all[i, j, k] * A[i, k]
+            p[j, k3] = theta3_all[j, j, k3] / sum
     p[~np.isfinite(p)] = 0
     print("Identification prob (R): ", np.sum(p) / p.size) 
     tau3 = np.sum(p) / p.size
@@ -316,7 +298,7 @@ def risks(I, K, V, A, m, hist, hist2, hist3):
         for i in range(I):
             if A3[i, k3] == 1 and theta3_all[i, i, k3] == 1:
                 v += 1
-    print("Unique prob (R): ", np.sum(v) / (I * K3))
+    print("Unique prob: ", np.sum(v) / (I * K3))
     phi3 = np.sum(v) / (I * K3)
 
     return tau1, tau2, tau3, phi1, phi2, phi3, K2, K3, theta_all, theta2_all, theta3_all, A2, A3
@@ -326,29 +308,27 @@ def smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all):
     # VOTINGAGE (2) $*$ HISPANIC (2) $*$ RACE (7)
     delta = np.empty([I, K])
     for k in range(K):
-        for i in range(I):
+        for j in range(I):
             sum = 0
-            for j in range(I):
+            for i in V[k]:
                 if i != j:
-                    sum += theta_all[j, i, k] * A[j, k]
-            new = theta_all[i, i, k] * A[i, k] + sum
-            delta[i, k] = abs(A[i, k] - new) / (A[i, k] + new)
-
+                    sum += theta_all[i, j, k] * A[i, k]
+            new = theta_all[j, j, k] * A[j, k] + sum
+            delta[j, k] = abs(A[j, k] - new) / (A[j, k] + new)
     delta[~np.isfinite(delta)] = 0
     print("SMAPE: ", np.sum(delta) / (I * K))
     smape1 = np.sum(delta) / (I * K)
 
-
     # HISPANIC (2) $*$ RACE (7)
     delta2 = np.empty([I, K2])
     for k2 in range(K2):
-        for i in range(I):
+        for j in range(I):
             sum = 0
-            for j in range(I):
+            for i in V[k]:
                 if i != j:
-                    sum += theta2_all[j, i, k2] * A2[j, k2]
-            new = theta2_all[i, i, k2] * A2[i, k2] + sum
-            delta2[i, k2] = abs(A2[i, k2] - new) / (A2[i, k2] + new)
+                    sum += theta2_all[i, j, k2] * A2[i, k2]
+            new = theta2_all[j, j, k2] * A2[j, k2] + sum
+            delta2[j, k2] = abs(A2[j, k2] - new) / (A2[j, k2] + new)
     delta2[~np.isfinite(delta2)] = 0
     print("SMAPE: ", np.sum(delta2) / (I * K2))
     smape2 = np.sum(delta2) / (I * K2)
@@ -356,14 +336,13 @@ def smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all):
     # RACE (7)
     delta3 = np.empty([I, K3])
     for k3 in range(K3):
-        for i in range(I):
+        for j in range(I):
             sum = 0
-            for j in range(I):
+            for i in V[k]:
                 if i != j:
-                    sum += theta3_all[j, i, k3] * A3[j, k3]
-            new = theta3_all[i, i, k3] * A3[i, k3] + sum
-            delta3[i, k3] = abs(A3[i, k3] - new) / (A3[i, k3] + new)
-
+                    sum += theta3_all[i, j, k3] * A3[i, k3]
+            new = theta3_all[j, j, k3] * A3[j, k3] + sum
+            delta3[j, k3] = abs(A3[j, k3] - new) / (A3[j, k3] + new)
     delta3[~np.isfinite(delta3)] = 0
     print("SMAPE: ", np.sum(delta3) / (I * K3))
     smape3 = np.sum(delta3) / (I * K3)
@@ -374,10 +353,9 @@ def smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all):
 def pmape_1(I, K, V, A, W, theta_all):
     delta_p = np.empty([I, I, K])
     for k in range(K):
-        for i in range(I):
-            for j in range(I):
-                if i in V[k]:
-                    delta_p[i, j, k] = theta_all[i, j, k] * A[i, k] * W[i, j, k]
+        for j in range(I):
+            for i in V[k]:
+                delta_p[i, j, k] = theta_all[i, j, k] * A[i, k] * W[i, j, k]
     delta_p[~np.isfinite(delta_p)] = 0
     print("P-MAPE: ", np.sum(delta_p) / (I * K))
     p_mape = np.sum(delta_p) / (I * K)
@@ -387,10 +365,9 @@ def pmape_1(I, K, V, A, W, theta_all):
 def pmape_2(I, K, V, A, W, theta_all):
     delta_p = np.empty([I, I, K])
     for k in range(K):
-        for i in range(I):
-            for j in range(I):
-                if i in V[k]:
-                    delta_p[i, j, k] = W[i, j, k] * T[i, j, k] * theta_all[i, j, k] * A[i, k]
+        for j in range(I):
+            for i in V[k]:
+                delta_p[i, j, k] = W[i, j, k] * T[i, j, k] * theta_all[i, j, k] * A[i, k]
     delta_p[~np.isfinite(delta_p)] = 0
     print("P-MAPE: ", np.sum(delta_p) / (I * K))
     p_mape = np.sum(delta_p) / (I * K)
