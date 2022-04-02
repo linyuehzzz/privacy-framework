@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+from numba import jit
+import pickle
 from gurobipy import Model, GRB, LinExpr, quicksum
 
 
@@ -345,6 +347,16 @@ def run_model(epsilon, I, K, T, A, W, V):
     return m
 
 
+def theta(I, K, V, A, m, theta_all):
+    for k in range(K):
+        for i in range(I):
+            if i not in V[k] and A[i, k] != 0:
+                theta_all[i, i, k] = 1
+    for var in m.getVars():
+        name = var.VarName.split("_")
+        theta_all[int(name[1]), int(name[2]), int(name[3])] = var.X
+    return theta_all
+
 
 # define inputs
 nj = 20
@@ -354,26 +366,43 @@ intervals = 20
 hist = read_data()
 hist2, hist3 = aggregate(hist)
 
-with open('bi_objective.csv', 'w') as fw:
-    fw.write('lambda,f1,f2,predicate,risk_1,risk_2,smape\n')
-    fw.flush()
+# with open('bi_objective.csv', 'w') as fw:
+#     fw.write('lambda,f1,f2,predicate,risk_1,risk_2,smape\n')
+#     fw.flush()
 
-    # lexicographic optimization
-    for i in r:
-        I, K, V, A, W = inputs(hist, r=i)
-        T = coverage_1(I, K, V)
-        f1_max = payoff(I, K, V, T, A, W, nj)
-        print("f1_max: ", f1_max)
-        for j in range(intervals + 1):
-            epsilon = f1_max * j / intervals
-            print("Epsilon: ", epsilon)
-            m = run_model(epsilon, I, K, T, A, W, V)
-            f2 = m.getObjective().getValue()
+#     # lexicographic optimization
+#     for i in r:
+#         I, K, V, A, W = inputs(hist, r=i)
+#         T = coverage_1(I, K, V)
+#         f1_max = payoff(I, K, V, T, A, W, nj)
+#         print("f1_max: ", f1_max)
+#         for j in range(intervals + 1):
+#             epsilon = f1_max * j / intervals
+#             print("Epsilon: ", epsilon)
+#             m = run_model(epsilon, I, K, T, A, W, V)
+#             f2 = m.getObjective().getValue()
 
-            tau1, tau2, tau3, phi1, phi2, phi3, K2, K3, theta_all, theta2_all, theta3_all, A2, A3 = risks(I, K, V, A, m, hist, hist2, hist3)
-            smape1, smape2, smape3 = smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all)
+#             tau1, tau2, tau3, phi1, phi2, phi3, K2, K3, theta_all, theta2_all, theta3_all, A2, A3 = risks(I, K, V, A, m, hist, hist2, hist3)
+#             smape1, smape2, smape3 = smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all)
 
-            fw.write(str(i) + ',' + str(epsilon) + ',' + str(f2) + ',' + "VER" + ',' + str(tau1) + ',' + str(phi1) + ',' + str(smape1) + '\n')
-            fw.write(str(i) + ',' + str(epsilon) + ',' + str(f2) + ',' + "ER" + ',' + str(tau2) + ',' + str(phi2) + ',' + str(smape2) + '\n')
-            fw.write(str(i) + ',' + str(epsilon) + ',' + str(f2) + ',' + "R" + ',' + str(tau3) + ',' + str(phi3) + ',' + str(smape3) + '\n')
-            fw.flush()
+#             fw.write(str(i) + ',' + str(epsilon) + ',' + str(f2) + ',' + "VER" + ',' + str(tau1) + ',' + str(phi1) + ',' + str(smape1) + '\n')
+#             fw.write(str(i) + ',' + str(epsilon) + ',' + str(f2) + ',' + "ER" + ',' + str(tau2) + ',' + str(phi2) + ',' + str(smape2) + '\n')
+#             fw.write(str(i) + ',' + str(epsilon) + ',' + str(f2) + ',' + "R" + ',' + str(tau3) + ',' + str(phi3) + ',' + str(smape3) + '\n')
+#             fw.flush()
+
+
+for i in r:
+    I, K, V, A, W = inputs(hist, r=i)
+    T = coverage_1(I, K, V)
+    f1_max = payoff(I, K, V, T, A, W, nj)
+    print("f1_max: ", f1_max)
+    for j in range(intervals + 1):
+        filename = 'data/bi_obj_sols/lambda' + str(i) + '_eps' + str(j) + '.pickle'
+        epsilon = f1_max * j / intervals
+        print("Epsilon: ", epsilon)
+        m = run_model(epsilon, I, K, T, A, W, V)
+        
+        theta_all = np.ones([I, I, K])
+        theta_all = theta(I, K, V, A, m, theta_all)
+        
+        pickle.dump(theta_all, open(filename, "wb"))
