@@ -347,16 +347,6 @@ def run_model(epsilon, I, K, T, A, W, V):
     return m
 
 
-def theta(I, K, V, A, m, theta_all):
-    for k in range(K):
-        for i in range(I):
-            if i not in V[k] and A[i, k] != 0:
-                theta_all[i, i, k] = 1
-    for var in m.getVars():
-        name = var.VarName.split("_")
-        theta_all[int(name[1]), int(name[2]), int(name[3])] = var.X
-    return theta_all
-
 
 # define inputs
 nj = 20
@@ -402,7 +392,13 @@ for i in r:
         print("Epsilon: ", epsilon)
         m = run_model(epsilon, I, K, T, A, W, V)
         
-        theta_all = np.ones([I, I, K])
-        theta_all = theta(I, K, V, A, m, theta_all)
+        theta_all = np.empty([I, I, K])
+        for k0 in range(K):
+            for i0 in range(I):
+                if i0 not in V[k0] and A[i0, k0] != 0:
+                    theta_all[i0, i0, k0] = 1
+        for var in m.getVars():
+            name = var.VarName.split("_")
+            theta_all[int(name[1]), int(name[2]), int(name[3])] = var.X
         
         pickle.dump(theta_all, open(filename, "wb"))
