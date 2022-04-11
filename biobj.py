@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from numba import jit
 import pickle
+import geopandas as gpd
 from gurobipy import Model, GRB, LinExpr, quicksum
 
 
@@ -381,24 +382,57 @@ hist2, hist3 = aggregate(hist)
 #             fw.flush()
 
 
-for i in r:
-    I, K, V, A, W = inputs(hist, r=i)
-    T = coverage_1(I, K, V)
-    f1_max = payoff(I, K, V, T, A, W, nj)
-    print("f1_max: ", f1_max)
-    for j in range(intervals + 1):
-        filename = 'data/bi_obj_sols/lambda' + str(i) + '_eps' + str(j) + '.pickle'
-        epsilon = f1_max * j / intervals
-        print("Epsilon: ", epsilon)
-        m = run_model(epsilon, I, K, T, A, W, V)
+# for i in r:
+#     I, K, V, A, W = inputs(hist, r=i)
+#     T = coverage_1(I, K, V)
+#     f1_max = payoff(I, K, V, T, A, W, nj)
+#     print("f1_max: ", f1_max)
+#     for j in range(intervals + 1):
+#         filename = 'data/bi_obj_sols/lambda' + str(i) + '_eps' + str(j) + '.pickle'
+#         epsilon = f1_max * j / intervals
+#         print("Epsilon: ", epsilon)
+#         m = run_model(epsilon, I, K, T, A, W, V)
         
-        theta_all = np.empty([I, I, K])
-        for k0 in range(K):
-            for i0 in range(I):
-                if i0 not in V[k0] and A[i0, k0] != 0:
-                    theta_all[i0, i0, k0] = 1
-        for var in m.getVars():
-            name = var.VarName.split("_")
-            theta_all[int(name[1]), int(name[2]), int(name[3])] = var.X
+#         theta_all = np.empty([I, I, K])
+#         for k0 in range(K):
+#             for i0 in range(I):
+#                 if i0 not in V[k0] and A[i0, k0] != 0:
+#                     theta_all[i0, i0, k0] = 1
+#         for var in m.getVars():
+#             name = var.VarName.split("_")
+#             theta_all[int(name[1]), int(name[2]), int(name[3])] = var.X
         
-        pickle.dump(theta_all, open(filename, "wb"))
+#         pickle.dump(theta_all, open(filename, "wb"))
+
+
+
+tracts = gpd.read_file("data\\franklin_tract10.shp")
+tracts = tracts.to_crs(epsg=4326)
+tracts.head()
+
+for x in r:
+    I, K, V, A, W = inputs(hist, r=x)
+    for y in range(intervals + 1):
+        theta = pickle.load(open("data\\bi_obj_sols\\lambda" + str(x) + "_eps" + str(y) + ".pickle", "rb"))
+        with open("data\\bi_obj_sols\\lambda" + str(x) + "_eps" + str(y) + ".csv", 'w') as fw:
+            fw.write('start_id,start_geoid,start_lat,start_lon,end_id,end_geoid,end_lat,end_lon,density\n')
+            fw.flush()
+            
+            for i in range(theta.shape[0]):
+                for j in range(theta.shape[1]):
+                    if i != j:
+                        density = 0
+                        for k in range(theta.shape[2]):
+                            if theta[i, j, k] != 0:
+                                density += theta[i, j, k] * A[i, k]
+                                
+                                start_geoid = hist.loc[i]["TRACT"]
+                                start_geom = tracts.loc[tracts["GEOID10"] == start_geoid]
+                                start_lat, start_lon = start_geom["INTPTLAT10"].values[0], start_geom["INTPTLON10"].values[0]
+                                
+                                end_geoid = hist.loc[j]["TRACT"]
+                                end_geom = tracts.loc[tracts["GEOID10"] == end_geoid]
+                                end_lat, end_lon = end_geom["INTPTLAT10"].values[0], end_geom["INTPTLON10"].values[0]
+
+                                fw.write(str(i) + ',' + str(start_geoid) + ',' + str(start_lat) + ',' + str(start_lon) + ',' + str(j) + ',' + str(end_geoid) + ',' + str(end_lat) + ',' + str(end_lon) + ',' + str(density) + '\n')
+                                fw.flush()
