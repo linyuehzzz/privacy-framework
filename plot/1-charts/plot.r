@@ -26,7 +26,7 @@ g1
 
 g2 <- ggplot(data = scm.data, aes(x=predicate, y=smape, fill=predicate)) +
   geom_bar(stat = "identity", color = "black", width=0.3) + 
-  labs(y = "SMAPE", x = "") +
+  labs(y = "s-MAPE", x = "") +
   scale_fill_grey(start = 0.7, end = 0.9) +
   facet_grid(coverage ~ lambda) +
   theme_bw() + 
@@ -82,7 +82,7 @@ f3
 f4 <- ggplot(data = mcm.data, aes(x=u, y=smape, fill=predicate)) +
   geom_line(aes(linetype=predicate, color=predicate)) +
   geom_point(aes(shape=predicate, color=predicate)) +
-  labs(y = "SMAPE", x = "") +
+  labs(y = "s-MAPE", x = "") +
   facet_grid(coverage ~ lambda) +
   scale_colour_grey(start = 0.1, end = 0.8) +
   theme_bw() + 
