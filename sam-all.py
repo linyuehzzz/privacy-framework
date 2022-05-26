@@ -309,11 +309,9 @@ def smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all):
     delta = np.empty([I, K])
     for k in range(K):
         for j in range(I):
-            sum = 0
-            for i in V[k]:
-                if i != j:
-                    sum += theta_all[i, j, k] * A[i, k]
-            new = theta_all[j, j, k] * A[j, k] + sum
+            new = 0
+            for i in range(I):
+                new += theta_all[i, j, k] * A[i, k]
             delta[j, k] = abs(A[j, k] - new) / (A[j, k] + new)
     delta[~np.isfinite(delta)] = 0
     print("SMAPE: ", np.sum(delta) / (I * K))
@@ -323,11 +321,9 @@ def smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all):
     delta2 = np.empty([I, K2])
     for k2 in range(K2):
         for j in range(I):
-            sum = 0
-            for i in V[k]:
-                if i != j:
-                    sum += theta2_all[i, j, k2] * A2[i, k2]
-            new = theta2_all[j, j, k2] * A2[j, k2] + sum
+            new = 0
+            for i in range(I):
+                new += theta2_all[i, j, k2] * A2[i, k2]
             delta2[j, k2] = abs(A2[j, k2] - new) / (A2[j, k2] + new)
     delta2[~np.isfinite(delta2)] = 0
     print("SMAPE: ", np.sum(delta2) / (I * K2))
@@ -337,11 +333,9 @@ def smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all):
     delta3 = np.empty([I, K3])
     for k3 in range(K3):
         for j in range(I):
-            sum = 0
-            for i in V[k]:
-                if i != j:
-                    sum += theta3_all[i, j, k3] * A3[i, k3]
-            new = theta3_all[j, j, k3] * A3[j, k3] + sum
+            new = 0
+            for i in range(I):
+                new += theta3_all[i, j, k3] * A3[i, k3]
             delta3[j, k3] = abs(A3[j, k3] - new) / (A3[j, k3] + new)
     delta3[~np.isfinite(delta3)] = 0
     print("SMAPE: ", np.sum(delta3) / (I * K3))
