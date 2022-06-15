@@ -1,9 +1,9 @@
 # Create the data for the chart
-H <- c(0,2,0,3,1,0,0,2)
-M <- c("(Male, N/A)", "(Female, N/A)", 
-       "(Male, 1997)", "(Female, 1997)", 
-       "(Male, 2003)", "(Female, 2003)", 
-       "(Male, 2011)", "(Female, 2011)")
+H <- c(3,0,1,2,0,2,0)
+M <- c("(Single, <15)", "(Single, 15-24)", 
+       "(Married, 15-24)", "(Single, 25-64)", 
+       "(Married, 25-64)", "(Single, >64)", 
+       "(Married, >64)")
 
 par(mar = c(7, 4, 2, 2) + 0.2)
 
