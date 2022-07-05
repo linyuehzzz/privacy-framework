@@ -87,7 +87,7 @@ def inputs(hist, r=3):
                 else:
                     W[i, j, k] = 1 / A[i, k] + 1 / A[j, k]
     
-    C = [1 / (np.sqrt(l + 1)) for l in range(r)]
+    C = [1 / ((l + 1)**2) for l in range(r)]
     return I, K, V, A, W, C            
 
 
@@ -165,8 +165,8 @@ def risks(I, K, V, A, m, r, hist, hist2, hist3):
         for j in range(I):
             sum = 0
             for k in range(K):
+                sum += Q2[k2, k] * theta_all[j, j, k] * A[j, k] 
                 for l in range(r):
-                    sum += Q2[k2, k] * theta_all[j, j, k] * A[j, k] 
                     for i in V[k][l]:
                         if i != j:
                             sum += Q2[k2, k] * theta_all[i, j, k] * A[i, k]
@@ -211,8 +211,8 @@ def risks(I, K, V, A, m, r, hist, hist2, hist3):
         for j in range(I):
             sum = 0
             for k in range(K):
+                sum += Q3[k3, k] * theta_all[j, j, k] * A[j, k] 
                 for l in range(r):
-                    sum += Q3[k3, k] * theta_all[j, j, k] * A[j, k] 
                     for i in V[k][l]:
                         if i != j:
                             sum += Q3[k3, k] * theta_all[i, j, k] * A[i, k]
@@ -353,8 +353,7 @@ def run_model(epsilon, I, K, T, A, W, V, r):
 
 # define inputs
 nj = 20
-# r = [1, 2, 3]
-r = [2, 3]
+r = [1, 2, 3]
 intervals = 20
 
 hist = read_data()
