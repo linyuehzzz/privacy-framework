@@ -118,13 +118,11 @@ def risks(I, K, V, A, m, r, hist, hist2, hist3):
 
     p = np.ones([I, K])
     for k in range(K):
-        for l in range(r):
-            for j in range(I):
-                sum = 0
-                for i in V[k][l]:
-                    if i != j:
-                        sum += theta_all[i, j, k] * A[i, k]
-                p[j, k] = theta_all[j, j, k] / (theta_all[j, j, k] * A[j, k] + sum)
+        for j in range(I):
+            sum = 0 
+            for i in range(I):
+                sum += theta_all[i, j, k] * A[i, k]
+            p[j, k] = theta_all[j, j, k] / sum
     p[~np.isfinite(p)] = 0
     print("Identification prob (VA*E*R): ", np.sum(p) / p.size)
     tau1 = np.sum(p) / p.size
@@ -165,11 +163,8 @@ def risks(I, K, V, A, m, r, hist, hist2, hist3):
         for j in range(I):
             sum = 0
             for k in range(K):
-                sum += Q2[k2, k] * theta_all[j, j, k] * A[j, k] 
-                for l in range(r):
-                    for i in V[k][l]:
-                        if i != j:
-                            sum += Q2[k2, k] * theta_all[i, j, k] * A[i, k]
+                for i in range(I):
+                    sum += Q2[k2, k] * theta_all[i, j, k] * A[i, k]
             p[j, k2] = theta2_all[j, j, k2] / sum
     p[~np.isfinite(p)] = 0
     print("Identification prob (E*R): ", np.sum(p) / p.size)
@@ -211,11 +206,8 @@ def risks(I, K, V, A, m, r, hist, hist2, hist3):
         for j in range(I):
             sum = 0
             for k in range(K):
-                sum += Q3[k3, k] * theta_all[j, j, k] * A[j, k] 
-                for l in range(r):
-                    for i in V[k][l]:
-                        if i != j:
-                            sum += Q3[k3, k] * theta_all[i, j, k] * A[i, k]
+                for i in range(I):
+                    sum += Q3[k3, k] * theta_all[i, j, k] * A[i, k]
             p[j, k3] = theta3_all[j, j, k3] / sum
     p[~np.isfinite(p)] = 0
     print("Identification prob (R): ", np.sum(p) / p.size) 
