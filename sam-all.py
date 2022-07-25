@@ -80,7 +80,7 @@ def inputs(hist, r=3):
     A = hist.iloc[:,1:].to_numpy()
     # print(A.shape, A[0])
 
-    W = np.empty([I, I, K])
+    W = np.zeros([I, I, K])
     for i in range(I):
         for j in range(I):
             for k in range(K):
@@ -181,7 +181,7 @@ def max_coverage(I, K, V, T, A, W, nj, p):
 
 def risks(I, K, V, A, m, hist, hist2, hist3):
     # VOTINGAGE (2) $*$ HISPANIC (2) $*$ RACE (7)
-    theta_all = np.empty([I, I, K])
+    theta_all = np.zeros([I, I, K])
     for k in range(K):
         for i in range(I):
             if i not in V[k] and A[i, k] != 0:
@@ -213,7 +213,7 @@ def risks(I, K, V, A, m, hist, hist2, hist3):
 
     # HISPANIC (2) $*$ RACE (7)
     K2 = hist2.shape[1] - 1
-    Q2 = np.empty([K2, K])
+    Q2 = np.zeros([K2, K])
     for idx2, col2 in enumerate(hist2.iloc[:,1:].columns):
         x = col2[0:2]
         y = col2[2:4]
@@ -222,7 +222,7 @@ def risks(I, K, V, A, m, hist, hist2, hist3):
                 Q2[idx2, idx] = 1
             else:
                 Q2[idx2, idx] = 0
-    theta2_all = np.empty([I, I, K2])
+    theta2_all = np.zeros([I, I, K2])
     for k2 in range(K2):
         for i in range(I):
             for j in range(I):
@@ -259,7 +259,7 @@ def risks(I, K, V, A, m, hist, hist2, hist3):
 
     # RACE (7)
     K3 = hist3.shape[1] - 1
-    Q3 = np.empty([K3, K])
+    Q3 = np.zeros([K3, K])
     for idx3, col3 in enumerate(hist3.iloc[:,1:].columns):
         x = col3[0:2]
         for idx, col in enumerate(hist.iloc[:,1:].columns):
@@ -267,7 +267,7 @@ def risks(I, K, V, A, m, hist, hist2, hist3):
                 Q3[idx3, idx] = 1
             else:
                 Q3[idx3, idx] = 0
-    theta3_all = np.empty([I, I, K3])
+    theta3_all = np.zeros([I, I, K3])
     for k3 in range(K3):
         for i in range(I):
             for j in range(I):
@@ -306,7 +306,7 @@ def risks(I, K, V, A, m, hist, hist2, hist3):
 
 def smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all):
     # VOTINGAGE (2) $*$ HISPANIC (2) $*$ RACE (7)
-    delta = np.empty([I, K])
+    delta = np.zeros([I, K])
     for k in range(K):
         for j in range(I):
             new = 0
@@ -318,7 +318,7 @@ def smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all):
     smape1 = np.sum(delta) / (I * K)
 
     # HISPANIC (2) $*$ RACE (7)
-    delta2 = np.empty([I, K2])
+    delta2 = np.zeros([I, K2])
     for k2 in range(K2):
         for j in range(I):
             new = 0
@@ -330,7 +330,7 @@ def smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all):
     smape2 = np.sum(delta2) / (I * K2)
 
     # RACE (7)
-    delta3 = np.empty([I, K3])
+    delta3 = np.zeros([I, K3])
     for k3 in range(K3):
         for j in range(I):
             new = 0
@@ -345,7 +345,7 @@ def smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all):
 
 
 def pmape_1(I, K, V, A, W, theta_all):
-    delta_p = np.empty([I, I, K])
+    delta_p = np.zeros([I, I, K])
     for k in range(K):
         for j in range(I):
             for i in V[k]:
@@ -357,7 +357,7 @@ def pmape_1(I, K, V, A, W, theta_all):
 
 
 def pmape_2(I, K, V, A, W, theta_all):
-    delta_p = np.empty([I, I, K])
+    delta_p = np.zeros([I, I, K])
     for k in range(K):
         for j in range(I):
             for i in V[k]:

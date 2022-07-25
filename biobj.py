@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from numba import jit
 import pickle
 import geopandas as gpd
 from gurobipy import Model, GRB, LinExpr, quicksum
@@ -71,16 +70,15 @@ def inputs(hist, r=3):
     
     V = []
     for k in range(1, K+1):
-        V.append(hist.index[(hist.iloc[:,k] <= r) & (hist.iloc[:,k] > 0)].tolist())
-    count = 0
-    for listElem in V:
-        count += len(listElem)  
-    print(count)
+        listElem = []
+        for l in range(1, r+1):
+            listElem.append(hist.index[hist.iloc[:,k] == l].tolist())
+        V.append(listElem)
 
     A = hist.iloc[:,1:].to_numpy()
     # print(A.shape, A[0])
 
-    W = np.empty([I, I, K])
+    W = np.zeros([I, I, K])
     for i in range(I):
         for j in range(I):
             for k in range(K):
@@ -88,29 +86,32 @@ def inputs(hist, r=3):
                     W[i, j, k] = 50
                 else:
                     W[i, j, k] = 1 / A[i, k] + 1 / A[j, k]
-    # print(W.shape, W[0])
-    return I, K, V, A, W            
+    
+    C = [1 / ((l + 1)**2) for l in range(r)]
+    return I, K, V, A, W, C            
 
 
-def coverage_1(I, K, V):
+def coverage_1(I, K, V, r):
     ## define coverage aijk
     T = np.ones((I, I, K))
 
     for i in range(I): 
         for j in range(I):
             for k in range(K):
-                if i == j or j in V[k]:
-                    T[i, j, k] = 0
+                for l in range(r):
+                    if i == j or j in V[k][l]:
+                        T[i, j, k] = 0
     return T
 
 
-def risks(I, K, V, A, m, hist, hist2, hist3):
+def risks(I, K, V, A, m, r, hist, hist2, hist3):
     # VOTINGAGE (2) $*$ HISPANIC (2) $*$ RACE (7)
-    theta_all = np.empty([I, I, K])
+    theta_all = np.zeros([I, I, K])
     for k in range(K):
-        for i in range(I):
-            if i not in V[k] and A[i, k] != 0:
-                theta_all[i, i, k] = 1
+        for l in range(r):
+            for i in range(I):
+                if i not in V[k][l] and A[i, k] != 0:
+                    theta_all[i, i, k] = 1
     for var in m.getVars():
         name = var.VarName.split("_")
         theta_all[int(name[1]), int(name[2]), int(name[3])] = var.X
@@ -118,11 +119,10 @@ def risks(I, K, V, A, m, hist, hist2, hist3):
     p = np.ones([I, K])
     for k in range(K):
         for j in range(I):
-            sum = 0
-            for i in V[k]:
-                if i != j:
-                    sum += theta_all[i, j, k] * A[i, k]
-            p[j, k] = theta_all[j, j, k] / (theta_all[j, j, k] * A[j, k] + sum)
+            sum = 0 
+            for i in range(I):
+                sum += theta_all[i, j, k] * A[i, k]
+            p[j, k] = theta_all[j, j, k] / sum
     p[~np.isfinite(p)] = 0
     print("Identification prob (VA*E*R): ", np.sum(p) / p.size)
     tau1 = np.sum(p) / p.size
@@ -138,7 +138,7 @@ def risks(I, K, V, A, m, hist, hist2, hist3):
 
     # HISPANIC (2) $*$ RACE (7)
     K2 = hist2.shape[1] - 1
-    Q2 = np.empty([K2, K])
+    Q2 = np.zeros([K2, K])
     for idx2, col2 in enumerate(hist2.iloc[:,1:].columns):
         x = col2[0:2]
         y = col2[2:4]
@@ -147,7 +147,7 @@ def risks(I, K, V, A, m, hist, hist2, hist3):
                 Q2[idx2, idx] = 1
             else:
                 Q2[idx2, idx] = 0
-    theta2_all = np.empty([I, I, K2])
+    theta2_all = np.zeros([I, I, K2])
     for k2 in range(K2):
         for i in range(I):
             for j in range(I):
@@ -163,10 +163,8 @@ def risks(I, K, V, A, m, hist, hist2, hist3):
         for j in range(I):
             sum = 0
             for k in range(K):
-                sum += Q2[k2, k] * theta_all[j, j, k] * A[j, k] 
-                for i in V[k]:
-                    if i != j:
-                        sum += Q2[k2, k] * theta_all[i, j, k] * A[i, k]
+                for i in range(I):
+                    sum += Q2[k2, k] * theta_all[i, j, k] * A[i, k]
             p[j, k2] = theta2_all[j, j, k2] / sum
     p[~np.isfinite(p)] = 0
     print("Identification prob (E*R): ", np.sum(p) / p.size)
@@ -184,7 +182,7 @@ def risks(I, K, V, A, m, hist, hist2, hist3):
 
     # RACE (7)
     K3 = hist3.shape[1] - 1
-    Q3 = np.empty([K3, K])
+    Q3 = np.zeros([K3, K])
     for idx3, col3 in enumerate(hist3.iloc[:,1:].columns):
         x = col3[0:2]
         for idx, col in enumerate(hist.iloc[:,1:].columns):
@@ -192,7 +190,7 @@ def risks(I, K, V, A, m, hist, hist2, hist3):
                 Q3[idx3, idx] = 1
             else:
                 Q3[idx3, idx] = 0
-    theta3_all = np.empty([I, I, K3])
+    theta3_all = np.zeros([I, I, K3])
     for k3 in range(K3):
         for i in range(I):
             for j in range(I):
@@ -208,10 +206,8 @@ def risks(I, K, V, A, m, hist, hist2, hist3):
         for j in range(I):
             sum = 0
             for k in range(K):
-                sum += Q3[k3, k] * theta_all[j, j, k] * A[j, k] 
-                for i in V[k]:
-                    if i != j:
-                        sum += Q3[k3, k] * theta_all[i, j, k] * A[i, k]
+                for i in range(I):
+                    sum += Q3[k3, k] * theta_all[i, j, k] * A[i, k]
             p[j, k3] = theta3_all[j, j, k3] / sum
     p[~np.isfinite(p)] = 0
     print("Identification prob (R): ", np.sum(p) / p.size) 
@@ -231,42 +227,36 @@ def risks(I, K, V, A, m, hist, hist2, hist3):
 
 def smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all):
     # VOTINGAGE (2) $*$ HISPANIC (2) $*$ RACE (7)
-    delta = np.empty([I, K])
+    delta = np.zeros([I, K])
     for k in range(K):
         for j in range(I):
-            sum = 0
-            for i in V[k]:
-                if i != j:
-                    sum += theta_all[i, j, k] * A[i, k]
-            new = theta_all[j, j, k] * A[j, k] + sum
+            new = 0
+            for i in range(I):
+                new += theta_all[i, j, k] * A[i, k]
             delta[j, k] = abs(A[j, k] - new) / (A[j, k] + new)
     delta[~np.isfinite(delta)] = 0
     print("SMAPE: ", np.sum(delta) / (I * K))
     smape1 = np.sum(delta) / (I * K)
 
     # HISPANIC (2) $*$ RACE (7)
-    delta2 = np.empty([I, K2])
+    delta2 = np.zeros([I, K2])
     for k2 in range(K2):
         for j in range(I):
-            sum = 0
-            for i in V[k]:
-                if i != j:
-                    sum += theta2_all[i, j, k2] * A2[i, k2]
-            new = theta2_all[j, j, k2] * A2[j, k2] + sum
+            new = 0
+            for i in range(I):
+                new += theta2_all[i, j, k2] * A2[i, k2]
             delta2[j, k2] = abs(A2[j, k2] - new) / (A2[j, k2] + new)
     delta2[~np.isfinite(delta2)] = 0
     print("SMAPE: ", np.sum(delta2) / (I * K2))
     smape2 = np.sum(delta2) / (I * K2)
 
     # RACE (7)
-    delta3 = np.empty([I, K3])
+    delta3 = np.zeros([I, K3])
     for k3 in range(K3):
         for j in range(I):
-            sum = 0
-            for i in V[k]:
-                if i != j:
-                    sum += theta3_all[i, j, k3] * A3[i, k3]
-            new = theta3_all[j, j, k3] * A3[j, k3] + sum
+            new = 0
+            for i in range(I):
+                new += theta3_all[i, j, k3] * A3[i, k3]
             delta3[j, k3] = abs(A3[j, k3] - new) / (A3[j, k3] + new)
     delta3[~np.isfinite(delta3)] = 0
     print("SMAPE: ", np.sum(delta3) / (I * K3))
@@ -275,7 +265,7 @@ def smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all):
     return smape1, smape2, smape3
 
 
-def payoff(I, K, V, T, A, W, nj):
+def payoff(I, K, V, T, A, W, C, nj, r):
     # initialize model
     m1 = Model('td')
     # m.Params.LogToConsole = 0
@@ -286,36 +276,37 @@ def payoff(I, K, V, T, A, W, nj):
     # add decision variables and objective function
     theta = {}
     for k in range(K):
-        if len(V[k]) == 0:
-            continue
-        for i in V[k]:
-            for j in range(I):
-                # decision variables
-                theta[i, j, k] = m1.addVar(vtype=GRB.CONTINUOUS, lb=0, ub=1, name="theta_%d_%d_%d"%(i, j, k))
-                # objective
-                obj1 += T[i, j, k] * theta[i, j, k] * A[i, k]
-                obj2 += T[i, j, k] * theta[i, j, k] * A[i, k] * W[i, j, k]
-                
-            # add constraints
-            m1.addConstr(quicksum(theta[i, j, k] for j in range(I)) == 1)
-            m1.addConstr(theta[i, i, k] + quicksum(T[i, j, k] * theta[i, j, k] for j in range(I)) == 1)
+        for l in range(r):
+            if len(V[k][l]) == 0:
+                continue
+            for i in V[k][l]:
+                for j in range(I):
+                    # decision variables
+                    theta[i, j, k] = m1.addVar(vtype=GRB.CONTINUOUS, lb=0, ub=1, name="theta_%d_%d_%d"%(i, j, k))
+                    # objective
+                    obj1 += C[l] * T[i, j, k] * theta[i, j, k] * A[i, k]
+                    obj2 += T[i, j, k] * theta[i, j, k] * A[i, k] * W[i, j, k]
+                    
+                # add constraints
+                m1.addConstr(quicksum(theta[i, j, k] for j in range(I)) == 1)
+                m1.addConstr(theta[i, i, k] + quicksum(T[i, j, k] * theta[i, j, k] for j in range(I)) == 1)
 
     for j in range(I):
-        m1.addConstr(quicksum(quicksum(T[i, j, k] * theta[i, j, k] * A[i, k] for i in V[k]) for k in range(K)) <= nj)
+        m1.addConstr(quicksum(quicksum(quicksum(T[i, j, k] * theta[i, j, k] * A[i, k] for i in V[k][l]) for l in range(r)) for k in range(K)) <= nj)
 
     m1.setObjectiveN(-obj1, index=0, priority=2, name="privacy")
     m1.setObjectiveN(obj2, index=1, priority=1, name="utility")
 
     m1.update()
     m1.optimize()
-    f1_max = -m1.getObjective().getValue()
-    return f1_max
+    m1.params.ObjNumber = 1
+    f2_max = m1.ObjNVal
+    return f2_max
 
 
-def run_model(epsilon, I, K, T, A, W, V):
+def run_model(epsilon, I, K, T, A, W, V, r):
     # initialize model
     m = Model('td')
-    # m.Params.LogToConsole = 0
 
     # add objective function
     obj = LinExpr()
@@ -323,25 +314,28 @@ def run_model(epsilon, I, K, T, A, W, V):
     # add decision variables and objective function
     theta = {}
     for k in range(K):
-        if len(V[k]) == 0:
-            continue
-        for i in V[k]:
-            for j in range(I):
-                # decision variables
-                theta[i, j, k] = m.addVar(vtype=GRB.CONTINUOUS, lb=0, ub=1, name="theta_%d_%d_%d"%(i, j, k))
-                # objective
-                obj += T[i, j, k] * theta[i, j, k] * A[i, k] * W[i, j, k]
-
-            # add constraints
-            m.addConstr(quicksum(theta[i, j, k] for j in range(I)) == 1)
-            m.addConstr(theta[i, i, k] + quicksum(T[i, j, k] * theta[i, j, k] for j in range(I)) == 1)
+        for l in range(r):
+            if len(V[k][l]) == 0:
+                continue
+            for i in V[k][l]:
+                for j in range(I):
+                    # decision variables
+                    theta[i, j, k] = m.addVar(vtype=GRB.CONTINUOUS, lb=0, ub=1, name="theta_%d_%d_%d"%(i, j, k))
+                    # objective
+                    obj += C[l] * T[i, j, k] * theta[i, j, k] * A[i, k]
+                    
+                # add constraints
+                m.addConstr(quicksum(theta[i, j, k] for j in range(I)) == 1)
+                m.addConstr(theta[i, i, k] + quicksum(T[i, j, k] * theta[i, j, k] for j in range(I)) == 1)
 
     for j in range(I):
-        m.addConstr(quicksum(quicksum(T[i, j, k] * theta[i, j, k] * A[i, k] for i in V[k]) for k in range(K)) <= nj)
+        m.addConstr(quicksum(quicksum(quicksum(T[i, j, k] * theta[i, j, k] * A[i, k] for i in V[k][l]) for l in range(r)) for k in range(K)) <= nj)
 
-    m.addConstr(quicksum(quicksum(quicksum(T[i, j, k] * theta[i, j, k] * A[i, k] for i in V[k]) for k in range(K)) for j in range(I)) >= epsilon)
+    # m.addConstr(quicksum(quicksum(quicksum(quicksum(C[l] * T[i, j, k] * theta[i, j, k] * A[i, k] for i in V[k][l]) for l in range(r)) for k in range(K)) for j in range(I)) >= epsilon)
 
-    m.setObjective(obj, GRB.MINIMIZE)
+    m.addConstr(quicksum(quicksum(quicksum(quicksum(T[i, j, k] * theta[i, j, k] * A[i, k] * W[i, j, k] for i in V[k][l]) for l in range(r)) for k in range(K)) for j in range(I)) <= epsilon)
+
+    m.setObjective(obj, GRB.MAXIMIZE)
 
     m.update()
     m.optimize()
@@ -357,29 +351,33 @@ intervals = 20
 hist = read_data()
 hist2, hist3 = aggregate(hist)
 
-# with open('bi_objective.csv', 'w') as fw:
-#     fw.write('lambda,f1,f2,predicate,risk_1,risk_2,smape\n')
-#     fw.flush()
+with open('bi_objective.csv', 'w') as fw:
+    fw.write('lambda,f1,f2,predicate,risk_1,risk_2,smape\n')
+    fw.flush()
 
-#     # lexicographic optimization
-#     for i in r:
-#         I, K, V, A, W = inputs(hist, r=i)
-#         T = coverage_1(I, K, V)
-#         f1_max = payoff(I, K, V, T, A, W, nj)
-#         print("f1_max: ", f1_max)
-#         for j in range(intervals + 1):
-#             epsilon = f1_max * j / intervals
-#             print("Epsilon: ", epsilon)
-#             m = run_model(epsilon, I, K, T, A, W, V)
-#             f2 = m.getObjective().getValue()
+    # lexicographic optimization
+    for i in r:
+        I, K, V, A, W, C = inputs(hist, r=i)
+        T = coverage_1(I, K, V, i)
+        f2_max = payoff(I, K, V, T, A, W, C, nj, i)
+        print("f2_max: ", f2_max)
+        for j in range(intervals + 1):
+            epsilon = f2_max * j / intervals
+            print("Epsilon: ", epsilon)
+            m = run_model(epsilon, I, K, T, A, W, V, i)
+            f1 = m.getObjective().getValue()
 
-#             tau1, tau2, tau3, phi1, phi2, phi3, K2, K3, theta_all, theta2_all, theta3_all, A2, A3 = risks(I, K, V, A, m, hist, hist2, hist3)
-#             smape1, smape2, smape3 = smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all)
+            tau1, tau2, tau3, phi1, phi2, phi3, K2, K3, theta_all, theta2_all, theta3_all, A2, A3 = risks(I, K, V, A, m, i, hist, hist2, hist3)
+            smape1, smape2, smape3 = smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all)
 
-#             fw.write(str(i) + ',' + str(epsilon) + ',' + str(f2) + ',' + "VER" + ',' + str(tau1) + ',' + str(phi1) + ',' + str(smape1) + '\n')
-#             fw.write(str(i) + ',' + str(epsilon) + ',' + str(f2) + ',' + "ER" + ',' + str(tau2) + ',' + str(phi2) + ',' + str(smape2) + '\n')
-#             fw.write(str(i) + ',' + str(epsilon) + ',' + str(f2) + ',' + "R" + ',' + str(tau3) + ',' + str(phi3) + ',' + str(smape3) + '\n')
-#             fw.flush()
+            fw.write(str(i) + ',' + str(f1) + ',' + str(epsilon) + ',' + "VER" + ',' + str(tau1) + ',' + str(phi1) + ',' + str(smape1) + '\n')
+            fw.write(str(i) + ',' + str(f1) + ',' + str(epsilon) + ',' + "ER" + ',' + str(tau2) + ',' + str(phi2) + ',' + str(smape2) + '\n')
+            fw.write(str(i) + ',' + str(f1) + ',' + str(epsilon) + ',' + "R" + ',' + str(tau3) + ',' + str(phi3) + ',' + str(smape3) + '\n')
+            fw.flush()
+
+            # theta
+            filename = 'bi_obj_sols/lambda' + str(i) + '_eps' + str(j) + '.pickle'
+            pickle.dump(theta_all, open(filename, "wb"))
 
 
 # for i in r:
@@ -393,7 +391,7 @@ hist2, hist3 = aggregate(hist)
 #         print("Epsilon: ", epsilon)
 #         m = run_model(epsilon, I, K, T, A, W, V)
         
-#         theta_all = np.empty([I, I, K])
+#         theta_all = np.zeros([I, I, K])
 #         for k0 in range(K):
 #             for i0 in range(I):
 #                 if i0 not in V[k0] and A[i0, k0] != 0:
@@ -406,33 +404,33 @@ hist2, hist3 = aggregate(hist)
 
 
 
-tracts = gpd.read_file("data\\franklin_tract10.shp")
-tracts = tracts.to_crs(epsg=4326)
-tracts.head()
+# tracts = gpd.read_file("data\\franklin_tract10.shp")
+# tracts = tracts.to_crs(epsg=4326)
+# tracts.head()
 
-for x in r:
-    I, K, V, A, W = inputs(hist, r=x)
-    for y in range(intervals + 1):
-        theta = pickle.load(open("data\\bi_obj_sols\\lambda" + str(x) + "_eps" + str(y) + ".pickle", "rb"))
-        with open("data\\bi_obj_sols\\lambda" + str(x) + "_eps" + str(y) + ".csv", 'w') as fw:
-            fw.write('start_id,start_geoid,start_lat,start_lon,end_id,end_geoid,end_lat,end_lon,density\n')
-            fw.flush()
+# for x in r:
+#     I, K, V, A, W = inputs(hist, r=x)
+#     for y in range(intervals + 1):
+#         theta = pickle.load(open("data\\bi_obj_sols\\lambda" + str(x) + "_eps" + str(y) + ".pickle", "rb"))
+#         with open("data\\bi_obj_sols\\lambda" + str(x) + "_eps" + str(y) + ".csv", 'w') as fw:
+#             fw.write('start_id,start_geoid,start_lat,start_lon,end_id,end_geoid,end_lat,end_lon,density\n')
+#             fw.flush()
             
-            for i in range(theta.shape[0]):
-                for j in range(theta.shape[1]):
-                    if i != j:
-                        density = 0
-                        for k in range(theta.shape[2]):
-                            if theta[i, j, k] != 0:
-                                density += theta[i, j, k] * A[i, k]
+#             for i in range(theta.shape[0]):
+#                 for j in range(theta.shape[1]):
+#                     if i != j:
+#                         density = 0
+#                         for k in range(theta.shape[2]):
+#                             if theta[i, j, k] != 0:
+#                                 density += theta[i, j, k] * A[i, k]
                                 
-                                start_geoid = hist.loc[i]["TRACT"]
-                                start_geom = tracts.loc[tracts["GEOID10"] == start_geoid]
-                                start_lat, start_lon = start_geom["INTPTLAT10"].values[0], start_geom["INTPTLON10"].values[0]
+#                                 start_geoid = hist.loc[i]["TRACT"]
+#                                 start_geom = tracts.loc[tracts["GEOID10"] == start_geoid]
+#                                 start_lat, start_lon = start_geom["INTPTLAT10"].values[0], start_geom["INTPTLON10"].values[0]
                                 
-                                end_geoid = hist.loc[j]["TRACT"]
-                                end_geom = tracts.loc[tracts["GEOID10"] == end_geoid]
-                                end_lat, end_lon = end_geom["INTPTLAT10"].values[0], end_geom["INTPTLON10"].values[0]
+#                                 end_geoid = hist.loc[j]["TRACT"]
+#                                 end_geom = tracts.loc[tracts["GEOID10"] == end_geoid]
+#                                 end_lat, end_lon = end_geom["INTPTLAT10"].values[0], end_geom["INTPTLON10"].values[0]
 
-                                fw.write(str(i) + ',' + str(start_geoid) + ',' + str(start_lat) + ',' + str(start_lon) + ',' + str(j) + ',' + str(end_geoid) + ',' + str(end_lat) + ',' + str(end_lon) + ',' + str(density) + '\n')
-                                fw.flush()
+#                                 fw.write(str(i) + ',' + str(start_geoid) + ',' + str(start_lat) + ',' + str(start_lon) + ',' + str(j) + ',' + str(end_geoid) + ',' + str(end_lat) + ',' + str(end_lon) + ',' + str(density) + '\n')
+#                                 fw.flush()

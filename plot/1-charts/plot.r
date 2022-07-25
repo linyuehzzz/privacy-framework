@@ -4,8 +4,8 @@ library(dplyr)
 ########------------- Read data -------------############
 
 options(scipen=999)
-scm.data <- readr::read_csv("set_coverage.csv")
-mcm.data <- readr::read_csv("max_coverage.csv")
+scm.data <- readr::read_csv("set_coverage.csv",show_col_types = FALSE)
+mcm.data <- readr::read_csv("max_coverage.csv",show_col_types = FALSE)
 
 
 ########------------- Set coverage -------------############

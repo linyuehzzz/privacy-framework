@@ -23,7 +23,7 @@ f0 <- ggplot(data = bi.data0, aes(x=f2, y=f1, fill=as.factor(lambda))) +
   #geom_line(aes(linetype=as.factor(lambda), color=as.factor(lambda))) +
   geom_line(linetype=3, aes(color=as.factor(lambda))) +
   geom_point(aes(shape=as.factor(lambda), color=as.factor(lambda)), size=1) +
-  #labs(y=expression(italic(f)[1]), x=expression(italic(f)[2]/'max('~italic(f)[2]~')× 100 (%)')) +
+  #labs(y=expression(italic(f)[1]), x=expression(italic(f)[2]/'max('~italic(f)[2]~')? 100 (%)')) +
   labs(y=expression(italic(f)[1]), x=expression(italic(f)[2])) +
   scale_colour_manual(values = c("red", "blue", "green")) +
   #scale_colour_grey(start = 0.1, end = 0.8) +
@@ -32,9 +32,7 @@ f0 <- ggplot(data = bi.data0, aes(x=f2, y=f1, fill=as.factor(lambda))) +
         strip.placement = "outside",
         axis.text = element_text(size = 8),
         panel.grid.major.y = element_blank())
-
 f0 
-
 
 ########------------- Metrics -------------############
 
@@ -44,7 +42,7 @@ bi.data$lambda <- factor(bi.data$lambda , levels = c("3", "2", "1"))
 f1 <- ggplot(data = bi.data, aes(x=smape, y=risk_1, fill=as.factor(lambda))) +
   #geom_line(aes(linetype=as.factor(lambda), color=as.factor(lambda))) +
   geom_line(aes(linetype=as.factor(lambda), color=as.factor(lambda))) +
-  #geom_point(aes(shape=as.factor(lambda), color=as.factor(lambda)), size=1) +
+  geom_point(aes(shape=as.factor(lambda), color=as.factor(lambda)), size=1) +
   labs(x="SME", y=expression("Global Disclosure Risk ("~tau~')')) +
   facet_grid(cols=vars(predicate)) +
   scale_colour_manual(values = c("red", "blue", "green")) +
@@ -59,7 +57,7 @@ f1
 f2 <- ggplot(data = bi.data, aes(x=smape, y=risk_2, fill=as.factor(lambda))) +
   #geom_line(aes(linetype=as.factor(lambda), color=as.factor(lambda))) +
   geom_line(aes(linetype=as.factor(lambda), color=as.factor(lambda))) +
-  #geom_point(aes(shape=as.factor(lambda), color=as.factor(lambda)), size=1) +
+  geom_point(aes(shape=as.factor(lambda), color=as.factor(lambda)), size=1) +
   labs(x="SME", y=expression("Population Uniqueness Rate ("~phi~')')) +
   facet_grid(cols=vars(predicate)) +
   scale_colour_manual(values = c("red", "blue", "green")) +
