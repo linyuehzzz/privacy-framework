@@ -1,12 +1,11 @@
 import pandas as pd
 import numpy as np
 import geopandas as gpd
-from pysal.lib import weights
+from libpysal import weights
 from gurobipy import Model, GRB, LinExpr, quicksum
 
 
-def read_data():
-    filename_hist = 'data/franklin_hist.csv'
+def read_data(filename_hist):
     hist = pd.read_csv(filename_hist)
 
     # block to tract
@@ -104,11 +103,10 @@ def coverage_1(I, K, V):
     return T
 
 
-def coverage_2(I, K, V):
-    filename_gdf = 'data/franklin_tract10.json'
+def coverage_2(I, K, V, filename_gdf):
     gdf = gpd.read_file(filename_gdf)
     gdf['GEOID10'] = gdf['GEOID10'].astype(str)
-    wr = weights.distance.KNN.from_dataframe(gdf, k=10)
+    wr = weights.distance.KNN.from_dataframe(gdf, k=9)
     # print(wr.neighbors[0])
 
     ## define coverage aijk
@@ -370,16 +368,20 @@ def pmape_2(I, K, V, A, W, theta_all):
 
 
 # define inputs
-nj = 20
+nj = 10
 r = [1, 2, 3]
 cov = [1, 2]
 p = [0.05, 0.1, 0.5, 1, 1.5, 2]
 
 
-hist = read_data()
+
+# franklin
+filename_hist = 'data/franklin_hist.csv'
+filename_gdf = 'data/franklin_tract10.json'
+hist = read_data(filename_hist)
 hist2, hist3 = aggregate(hist)
 
-with open('set_coverage.csv', 'w') as fw:
+with open('set_coverage_franklin.csv', 'w') as fw:
   fw.write('lambda,coverage,predicate,p_mape,risk_1,risk_2,smape\n')
   fw.flush()
 
@@ -389,7 +391,7 @@ with open('set_coverage.csv', 'w') as fw:
         if j == 1:
             T = coverage_1(I, K, V)
         else:
-            T = coverage_2(I, K, V)
+            T = coverage_2(I, K, V, filename_gdf)
         m = set_coverage(I, K, V, T, A, W, nj)
 
         tau1, tau2, tau3, phi1, phi2, phi3, K2, K3, theta_all, theta2_all, theta3_all, A2, A3 = risks(I, K, V, A, m, hist, hist2, hist3)
@@ -401,7 +403,7 @@ with open('set_coverage.csv', 'w') as fw:
         fw.write(str(i) + ',' + str(j) + ',' + "R" + ',,' + str(tau3) + ',' + str(phi3) + ',' + str(smape3) + '\n')
         fw.flush()
 
-with open('max_coverage.csv', 'w') as fw:
+with open('max_coverage_franklin.csv', 'w') as fw:
   fw.write('lambda,coverage,u,predicate,p_mape,risk_1,risk_2,smape\n')
   fw.flush()
 
@@ -412,7 +414,60 @@ with open('max_coverage.csv', 'w') as fw:
             if j == 1:
                 T = coverage_1(I, K, V)
             else:
-                T = coverage_2(I, K, V)
+                T = coverage_2(I, K, V, filename_gdf)
+            m = max_coverage(I, K, V, T, A, W, nj, k*I*K)
+
+            tau1, tau2, tau3, phi1, phi2, phi3, K2, K3, theta_all, theta2_all, theta3_all, A2, A3 = risks(I, K, V, A, m, hist, hist2, hist3)
+            smape1, smape2, smape3 = smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all)
+            p_mape = pmape_2(I, K, V, A, W, theta_all)
+
+            fw.write(str(i) + ',' + str(j) + ',' + str(k) + ',' + "VER" + ',' + str(p_mape) + ',' + str(tau1) + ',' + str(phi1) + ',' + str(smape1) + '\n')
+            fw.write(str(i) + ',' + str(j) + ',' + str(k) + ',' + "ER" + ',,' + str(tau2) + ',' + str(phi2) + ',' + str(smape2) + '\n')
+            fw.write(str(i) + ',' + str(j) + ',' + str(k) + ',' + "R" + ',,' + str(tau3) + ',' + str(phi3) + ',' + str(smape3) + '\n')
+            fw.flush()
+
+
+
+# guernsey
+filename_hist = 'data/guernsey_hist.csv'
+filename_gdf = 'data/guernsey_tract10.json'
+hist = read_data(filename_hist)
+hist2, hist3 = aggregate(hist)
+
+with open('set_coverage_guernsey.csv', 'w') as fw:
+  fw.write('lambda,coverage,predicate,p_mape,risk_1,risk_2,smape\n')
+  fw.flush()
+
+  for i in r:
+      for j in cov:
+        I, K, V, A, W = inputs(hist, r=i)
+        if j == 1:
+            T = coverage_1(I, K, V)
+        else:
+            T = coverage_2(I, K, V, filename_gdf)
+        m = set_coverage(I, K, V, T, A, W, nj)
+
+        tau1, tau2, tau3, phi1, phi2, phi3, K2, K3, theta_all, theta2_all, theta3_all, A2, A3 = risks(I, K, V, A, m, hist, hist2, hist3)
+        smape1, smape2, smape3 = smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all)
+        p_mape = pmape_1(I, K, V, A, W, theta_all)
+
+        fw.write(str(i) + ',' + str(j) + ',' + "VER" + ',' + str(p_mape) + ',' + str(tau1) + ',' + str(phi1) + ',' + str(smape1) + '\n')
+        fw.write(str(i) + ',' + str(j) + ',' + "ER" + ',,' + str(tau2) + ',' + str(phi2) + ',' + str(smape2) + '\n')
+        fw.write(str(i) + ',' + str(j) + ',' + "R" + ',,' + str(tau3) + ',' + str(phi3) + ',' + str(smape3) + '\n')
+        fw.flush()
+
+with open('max_coverage_guernsey.csv', 'w') as fw:
+  fw.write('lambda,coverage,u,predicate,p_mape,risk_1,risk_2,smape\n')
+  fw.flush()
+
+  for i in r:
+      for j in cov:
+          for k in p:
+            I, K, V, A, W = inputs(hist, r=i)
+            if j == 1:
+                T = coverage_1(I, K, V)
+            else:
+                T = coverage_2(I, K, V, filename_gdf)
             m = max_coverage(I, K, V, T, A, W, nj, k*I*K)
 
             tau1, tau2, tau3, phi1, phi2, phi3, K2, K3, theta_all, theta2_all, theta3_all, A2, A3 = risks(I, K, V, A, m, hist, hist2, hist3)

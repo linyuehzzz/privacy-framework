@@ -352,7 +352,7 @@ hist = read_data()
 hist2, hist3 = aggregate(hist)
 
 with open('bi_objective.csv', 'w') as fw:
-    fw.write('lambda,f1,f2,predicate,risk_1,risk_2,smape\n')
+    fw.write('lambda,f1,f2,predicate,risk_1,risk_2,smape,time\n')
     fw.flush()
 
     # lexicographic optimization
@@ -365,19 +365,20 @@ with open('bi_objective.csv', 'w') as fw:
             epsilon = f2_max * j / intervals
             print("Epsilon: ", epsilon)
             m = run_model(epsilon, I, K, T, A, W, V, i)
+            time = m.Runtime
             f1 = m.getObjective().getValue()
 
             tau1, tau2, tau3, phi1, phi2, phi3, K2, K3, theta_all, theta2_all, theta3_all, A2, A3 = risks(I, K, V, A, m, i, hist, hist2, hist3)
             smape1, smape2, smape3 = smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all)
 
-            fw.write(str(i) + ',' + str(f1) + ',' + str(epsilon) + ',' + "VER" + ',' + str(tau1) + ',' + str(phi1) + ',' + str(smape1) + '\n')
-            fw.write(str(i) + ',' + str(f1) + ',' + str(epsilon) + ',' + "ER" + ',' + str(tau2) + ',' + str(phi2) + ',' + str(smape2) + '\n')
-            fw.write(str(i) + ',' + str(f1) + ',' + str(epsilon) + ',' + "R" + ',' + str(tau3) + ',' + str(phi3) + ',' + str(smape3) + '\n')
+            fw.write(str(i) + ',' + str(f1) + ',' + str(epsilon) + ',' + "VER" + ',' + str(tau1) + ',' + str(phi1) + ',' + str(smape1) + ',' + str(time) + '\n')
+            fw.write(str(i) + ',' + str(f1) + ',' + str(epsilon) + ',' + "ER" + ',' + str(tau2) + ',' + str(phi2) + ',' + str(smape2) + ',' + str(time) + '\n')
+            fw.write(str(i) + ',' + str(f1) + ',' + str(epsilon) + ',' + "R" + ',' + str(tau3) + ',' + str(phi3) + ',' + str(smape3) + ',' + str(time) + '\n')
             fw.flush()
 
-            # theta
-            filename = 'bi_obj_sols/lambda' + str(i) + '_eps' + str(j) + '.pickle'
-            pickle.dump(theta_all, open(filename, "wb"))
+            # # theta
+            # filename = 'bi_obj_sols/lambda' + str(i) + '_eps' + str(j) + '.pickle'
+            # pickle.dump(theta_all, open(filename, "wb"))
 
 
 # for i in r:
