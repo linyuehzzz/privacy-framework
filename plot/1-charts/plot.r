@@ -19,6 +19,7 @@ scm2.data$new <- paste(scm2.data$predicate, '_', scm2.data$coverage)
 f1 <- ggplot(data = scm1.data, aes(x=factor(lambda), y=risk_1, fill=new)) +
   geom_point(aes(shape=new, color=new), size=2) +
   labs(y = expression("Disclosure Risk:" ~tau), x = "") +
+  ylim(0, 0.1) +
   scale_shape_manual(values=c(3, 3, 16, 16, 17, 17)) +
   scale_colour_manual(values=c("red", "green", "red", "green", "red", "green")) +
   theme_bw() + 
@@ -31,6 +32,7 @@ f1
 g1 <- ggplot(data = scm2.data, aes(x=factor(lambda), y=risk_1, fill=new)) +
   geom_point(aes(shape=new, color=new), size=2) +
   labs(y = expression("Disclosure Risk:" ~tau), x = "") +
+  ylim(0, 0.1) +
   scale_shape_manual(values=c(3, 3, 16, 16, 17, 17)) +
   scale_colour_manual(values=c("red", "green", "red", "green", "red", "green")) +
   theme_bw() + 
@@ -43,6 +45,7 @@ g1
 f2 <- ggplot(data = scm1.data, aes(x=factor(lambda), y=smape, fill=new)) +
   geom_point(aes(shape=new, color=new), size=2) + 
   labs(y = "SME", x = "") +
+  ylim(0, 0.4) +
   scale_shape_manual(values=c(3, 3, 16, 16, 17, 17)) +
   scale_colour_manual(values=c("red", "green", "red", "green", "red", "green")) +
   theme_bw() + 
@@ -55,6 +58,7 @@ f2
 g2 <- ggplot(data = scm2.data, aes(x=factor(lambda), y=smape, fill=new)) +
   geom_point(aes(shape=new, color=new), size=2) + 
   labs(y = "SME", x = "") +
+  ylim(0, 0.4) +
   scale_shape_manual(values=c(3, 3, 16, 16, 17, 17)) +
   scale_colour_manual(values=c("red", "green", "red", "green", "red", "green")) +
   theme_bw() + 
@@ -74,6 +78,7 @@ mcm2.data$new <- paste(mcm2.data$predicate, '_', mcm2.data$coverage)
 f3 <- ggplot(data = mcm1.data, aes(x=u, y=risk_1, fill=new)) +
   geom_point(aes(shape=new, color=new)) +
   labs(y = expression("Disclosure Risk:" ~tau), x = "") +
+  ylim(0, 0.25) +
   facet_grid(cols=vars(lambda)) +
   scale_shape_manual(values=c(3, 3, 16, 16, 17, 17)) +
   scale_colour_manual(values=c("red", "green", "red", "green", "red", "green")) +
@@ -87,6 +92,7 @@ f3
 g3 <- ggplot(data = mcm2.data, aes(x=u, y=risk_1, fill=new)) +
   geom_point(aes(shape=new, color=new)) +
   labs(y = expression("Disclosure Risk:" ~tau), x = "") +
+  ylim(0, 0.25) +
   facet_grid(cols=vars(lambda)) +
   scale_shape_manual(values=c(3, 3, 16, 16, 17, 17)) +
   scale_colour_manual(values=c("red", "green", "red", "green", "red", "green")) +
@@ -100,6 +106,7 @@ g3
 f4 <- ggplot(data = mcm1.data, aes(x=u, y=risk_2, fill=new)) +
   geom_point(aes(shape=new, color=new)) +
   labs(y = expression("Disclosure Risk:" ~phi), x = "") +
+  ylim(0, 0.15) +
   facet_grid(cols=vars(lambda)) +
   scale_shape_manual(values=c(3, 3, 16, 16, 17, 17)) +
   scale_colour_manual(values=c("red", "green", "red", "green", "red", "green")) +
@@ -113,6 +120,7 @@ f4
 g4 <- ggplot(data = mcm2.data, aes(x=u, y=risk_2, fill=new)) +
   geom_point(aes(shape=new, color=new)) +
   labs(y = expression("Disclosure Risk:" ~phi), x = "") +
+  ylim(0, 0.15) +
   facet_grid(cols=vars(lambda)) +
   scale_shape_manual(values=c(3, 3, 16, 16, 17, 17)) +
   scale_colour_manual(values=c("red", "green", "red", "green", "red", "green")) +
@@ -139,6 +147,7 @@ g4
 f6 <- ggplot(data = mcm1.data, aes(x=u, y=smape, fill=new)) +
   geom_point(aes(shape=new, color=new)) +
   labs(y = "SME") +
+  ylim(0, 0.3) +
   facet_grid(cols=vars(lambda)) +
   scale_shape_manual(values=c(3, 3, 16, 16, 17, 17)) +
   scale_colour_manual(values=c("red", "green", "red", "green", "red", "green")) +
@@ -152,6 +161,7 @@ f6
 g6 <- ggplot(data = mcm2.data, aes(x=u, y=smape, fill=new)) +
   geom_point(aes(shape=new, color=new)) +
   labs(y = "SME") +
+  ylim(0, 0.3) +
   facet_grid(cols=vars(lambda)) +
   scale_shape_manual(values=c(3, 3, 16, 16, 17, 17)) +
   scale_colour_manual(values=c("red", "green", "red", "green", "red", "green")) +
