@@ -24,39 +24,28 @@ ggplot(ori.data, aes(x=predicate, y=risk, fill=as.factor(risk_type))) +
 
 ########------------- Time -------------############
 bi.data0 <- bi.data %>% filter(predicate == "VER")
-totals <- bi.data0 %>%
-  group_by(lambda) %>%
-  summarize(total = sum(time))
-ggplot(data = bi.data0, aes(x=as.factor(lambda), y=time, fill=epsilon_pct)) +
-  geom_bar(position="stack", stat="identity", width=0.5) +
-  geom_text(aes(lambda, total+0.5, label=round(total, 3), fill = NULL), data = totals) +
-  scale_fill_gradient2() +
+bi.data0$lambda <- factor(bi.data0$lambda , levels = c("3", "2", "1"))
+
+ggplot(data = bi.data0, aes(x=q/100, y=cumsum(time), fill=as.factor(lambda))) +
+  geom_point(aes(shape=as.factor(lambda), color=as.factor(lambda)), size=1) +
+  labs(y="Runtime (s)") +
+  scale_colour_manual(values = c("red", "blue", "green")) +
   theme_bw() + 
   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "cm"),
         strip.placement = "outside",
         axis.text = element_text(size = 8),
-        panel.grid.major.y = element_blank()) 
+        panel.grid.major.y = element_blank())
+
 
 
 ########------------- Objectives -------------############
 bi.data0 <- bi.data %>% filter(predicate == "VER")
-# bi.data0$f2[bi.data0$lambda == 1] <- as.numeric(bi.data0[bi.data0$lambda == 1, ]$f2) * 100 / 740.725589257187
-# bi.data0$f2[bi.data0$lambda == 2] <- as.numeric(bi.data0[bi.data0$lambda == 2, ]$f2) * 100 / 1313.37213444108
-# bi.data0$f2[bi.data0$lambda == 3] <- as.numeric(bi.data0[bi.data0$lambda == 3, ]$f2) * 100 / 2839.76182586111
 bi.data0$lambda <- factor(bi.data0$lambda , levels = c("3", "2", "1"))
 
 f0 <- ggplot(data = bi.data0, aes(x=f2, y=f1, fill=as.factor(lambda))) +
-  # geom_vline(xintercept=25,linetype=3) +
-  # geom_vline(xintercept=50,linetype=3) +
-  # geom_vline(xintercept=75,linetype=3) +
-  # geom_vline(xintercept=100,linetype=3) +
-  #geom_line(aes(linetype=as.factor(lambda), color=as.factor(lambda))) +
-  # geom_line(linetype=3, aes(color=as.factor(lambda))) +
   geom_point(aes(shape=as.factor(lambda), color=as.factor(lambda)), size=1) +
-  #labs(y=expression(italic(f)[1]), x=expression(italic(f)[2]/'max('~italic(f)[2]~')? 100 (%)')) +
   labs(y=expression(italic(f)[1]), x=expression(italic(f)[2])) +
   scale_colour_manual(values = c("red", "blue", "green")) +
-  #scale_colour_grey(start = 0.1, end = 0.8) +
   theme_bw() + 
   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "cm"),
         strip.placement = "outside",
@@ -69,14 +58,11 @@ f0
 bi.data$predicate <- factor(bi.data$predicate, levels = c("VER", "ER", "R"))
 bi.data$lambda <- factor(bi.data$lambda , levels = c("3", "2", "1"))
 
-f1 <- ggplot(data = bi.data, aes(x=smape, y=risk_1, fill=as.factor(lambda))) +
-  #geom_line(aes(linetype=as.factor(lambda), color=as.factor(lambda))) +
-  #geom_line(aes(linetype=as.factor(lambda), color=as.factor(lambda))) +
+f1 <- ggplot(data = bi.data, aes(x=utility, y=risk_1, fill=as.factor(lambda))) +
   geom_point(aes(shape=as.factor(lambda), color=as.factor(lambda)), size=1) +
-  labs(x="SME", y=expression("Global Disclosure Risk ("~tau~')')) +
+  labs(x="Data utility (U)", y=expression("Global disclosure risk ("~tau~')')) +
   facet_grid(cols=vars(predicate)) +
   scale_colour_manual(values = c("red", "blue", "green")) +
-  #scale_colour_grey(start = 0.1, end = 0.8) +
   theme_bw() + 
   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "cm"),
         strip.placement = "outside",
@@ -84,14 +70,11 @@ f1 <- ggplot(data = bi.data, aes(x=smape, y=risk_1, fill=as.factor(lambda))) +
         panel.grid.major.y = element_blank())
 f1 
 
-f2 <- ggplot(data = bi.data, aes(x=smape, y=risk_2, fill=as.factor(lambda))) +
-  #geom_line(aes(linetype=as.factor(lambda), color=as.factor(lambda))) +
-  #geom_line(aes(linetype=as.factor(lambda), color=as.factor(lambda))) +
+f2 <- ggplot(data = bi.data, aes(x=utility, y=risk_2, fill=as.factor(lambda))) +
   geom_point(aes(shape=as.factor(lambda), color=as.factor(lambda)), size=1) +
-  labs(x="SME", y=expression("Population Uniqueness Rate ("~phi~')')) +
+  labs(x="Data utility (U)", y=expression("Population uniqueness rate ("~phi~')')) +
   facet_grid(cols=vars(predicate)) +
   scale_colour_manual(values = c("red", "blue", "green")) +
-  #scale_colour_grey(start = 0.1, end = 0.8) +
   theme_bw() + 
   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "cm"),
         strip.placement = "outside",
@@ -105,12 +88,9 @@ bi.data0 <- bi.data %>% filter(predicate == "VER")
 bi.data0$lambda <- factor(bi.data0$lambda , levels = c("3", "2", "1"))
 
 f3 <- ggplot(data = bi.data0, aes(x=f1, y=risk_1, fill=as.factor(lambda))) +
-  #geom_line(aes(linetype=as.factor(lambda), color=as.factor(lambda))) +
-  #geom_line(linetype=3, aes(color=as.factor(lambda))) +
   geom_point(aes(shape=as.factor(lambda), color=as.factor(lambda)), size=1) +
   labs(y=expression("Global Disclosure Risk ("~tau~')'), x=expression(italic(f)[1])) +
   scale_colour_manual(values = c("red", "blue", "green")) +
-  #scale_colour_grey(start = 0.1, end = 0.8) +
   theme_bw() + 
   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "cm"),
         strip.placement = "outside",
@@ -119,12 +99,9 @@ f3 <- ggplot(data = bi.data0, aes(x=f1, y=risk_1, fill=as.factor(lambda))) +
 f3 
 
 f4 <- ggplot(data = bi.data0, aes(x=f1, y=risk_2, fill=as.factor(lambda))) +
-  #geom_line(aes(linetype=as.factor(lambda), color=as.factor(lambda))) +
-  #geom_line(linetype=3, aes(color=as.factor(lambda))) +
   geom_point(aes(shape=as.factor(lambda), color=as.factor(lambda)), size=1) +
   labs(y=expression("Population Uniqueness Rate ("~phi~')'), x=expression(italic(f)[1])) +
   scale_colour_manual(values = c("red", "blue", "green")) +
-  #scale_colour_grey(start = 0.1, end = 0.8) +
   theme_bw() + 
   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "cm"),
         strip.placement = "outside",
@@ -132,13 +109,10 @@ f4 <- ggplot(data = bi.data0, aes(x=f1, y=risk_2, fill=as.factor(lambda))) +
         panel.grid.major.y = element_blank())
 f4 
 
-f5 <- ggplot(data = bi.data0, aes(x=f2, y=smape, fill=as.factor(lambda))) +
-  #geom_line(aes(linetype=as.factor(lambda), color=as.factor(lambda))) +
-  #geom_line(linetype=3, aes(color=as.factor(lambda))) +
+f5 <- ggplot(data = bi.data0, aes(x=f2, y=utility, fill=as.factor(lambda))) +
   geom_point(aes(shape=as.factor(lambda), color=as.factor(lambda)), size=1) +
   labs(y="SME", x=expression(italic(f)[2])) +
   scale_colour_manual(values = c("red", "blue", "green")) +
-  #scale_colour_grey(start = 0.1, end = 0.8) +
   theme_bw() + 
   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "cm"),
         strip.placement = "outside",

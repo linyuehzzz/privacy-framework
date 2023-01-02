@@ -83,7 +83,7 @@ def inputs(hist, r=3):
         for j in range(I):
             for k in range(K):
                 if A[i, k] == 0 or A[j, k] == 0:
-                    W[i, j, k] = 50
+                    W[i, j, k] = 0
                 else:
                     W[i, j, k] = 1 / A[i, k] + 1 / A[j, k]
     
@@ -99,7 +99,7 @@ def coverage_1(I, K, V, r):
         for j in range(I):
             for k in range(K):
                 for l in range(r):
-                    if i == j or j in V[k][l]:
+                    if i == j or j in V[k][l] or A[j, k] == 0:
                         T[i, j, k] = 0
     return T
 
@@ -224,8 +224,7 @@ def risks(I, K, V, A, m, r, hist, hist2, hist3):
 
     return tau1, tau2, tau3, phi1, phi2, phi3, K2, K3, theta_all, theta2_all, theta3_all, A2, A3
 
-
-def smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all):
+def mape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all):
     # VOTINGAGE (2) $*$ HISPANIC (2) $*$ RACE (7)
     delta = np.zeros([I, K])
     for k in range(K):
@@ -233,10 +232,10 @@ def smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all):
             new = 0
             for i in range(I):
                 new += theta_all[i, j, k] * A[i, k]
-            delta[j, k] = abs(A[j, k] - new) / (A[j, k] + new)
+            delta[j, k] = abs(A[j, k] - new) / A[j, k]
     delta[~np.isfinite(delta)] = 0
-    print("SMAPE: ", np.sum(delta) / (I * K))
-    smape1 = np.sum(delta) / (I * K)
+    print("MAPE: ", np.sum(delta) / (I * K))
+    mape1 = np.sum(delta) / (I * K)
 
     # HISPANIC (2) $*$ RACE (7)
     delta2 = np.zeros([I, K2])
@@ -245,10 +244,10 @@ def smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all):
             new = 0
             for i in range(I):
                 new += theta2_all[i, j, k2] * A2[i, k2]
-            delta2[j, k2] = abs(A2[j, k2] - new) / (A2[j, k2] + new)
+            delta2[j, k2] = abs(A2[j, k2] - new) / A2[j, k2]
     delta2[~np.isfinite(delta2)] = 0
-    print("SMAPE: ", np.sum(delta2) / (I * K2))
-    smape2 = np.sum(delta2) / (I * K2)
+    print("MAPE: ", np.sum(delta2) / (I * K2))
+    mape2 = np.sum(delta2) / (I * K2)
 
     # RACE (7)
     delta3 = np.zeros([I, K3])
@@ -257,12 +256,51 @@ def smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all):
             new = 0
             for i in range(I):
                 new += theta3_all[i, j, k3] * A3[i, k3]
-            delta3[j, k3] = abs(A3[j, k3] - new) / (A3[j, k3] + new)
+            delta3[j, k3] = abs(A3[j, k3] - new) / A3[j, k3]
     delta3[~np.isfinite(delta3)] = 0
-    print("SMAPE: ", np.sum(delta3) / (I * K3))
-    smape3 = np.sum(delta3) / (I * K3)
+    print("MAPE: ", np.sum(delta3) / (I * K3))
+    mape3 = np.sum(delta3) / (I * K3)
 
-    return smape1, smape2, smape3
+    return mape1, mape2, mape3
+
+# def smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all):
+#     # VOTINGAGE (2) $*$ HISPANIC (2) $*$ RACE (7)
+#     delta = np.zeros([I, K])
+#     for k in range(K):
+#         for j in range(I):
+#             new = 0
+#             for i in range(I):
+#                 new += theta_all[i, j, k] * A[i, k]
+#             delta[j, k] = abs(A[j, k] - new) / (A[j, k] + new)
+#     delta[~np.isfinite(delta)] = 0
+#     print("SMAPE: ", np.sum(delta) / (I * K))
+#     smape1 = np.sum(delta) / (I * K)
+
+#     # HISPANIC (2) $*$ RACE (7)
+#     delta2 = np.zeros([I, K2])
+#     for k2 in range(K2):
+#         for j in range(I):
+#             new = 0
+#             for i in range(I):
+#                 new += theta2_all[i, j, k2] * A2[i, k2]
+#             delta2[j, k2] = abs(A2[j, k2] - new) / (A2[j, k2] + new)
+#     delta2[~np.isfinite(delta2)] = 0
+#     print("SMAPE: ", np.sum(delta2) / (I * K2))
+#     smape2 = np.sum(delta2) / (I * K2)
+
+#     # RACE (7)
+#     delta3 = np.zeros([I, K3])
+#     for k3 in range(K3):
+#         for j in range(I):
+#             new = 0
+#             for i in range(I):
+#                 new += theta3_all[i, j, k3] * A3[i, k3]
+#             delta3[j, k3] = abs(A3[j, k3] - new) / (A3[j, k3] + new)
+#     delta3[~np.isfinite(delta3)] = 0
+#     print("SMAPE: ", np.sum(delta3) / (I * K3))
+#     smape3 = np.sum(delta3) / (I * K3)
+
+#     return smape1, smape2, smape3
 
 
 def payoff(I, K, V, T, A, W, C, nj, r):
@@ -352,7 +390,7 @@ hist = read_data()
 hist2, hist3 = aggregate(hist)
 
 with open('bi_objective.csv', 'w') as fw:
-    fw.write('lambda,f1,f2,predicate,risk_1,risk_2,smape,time\n')
+    fw.write('lambda,f1,f2,predicate,risk_1,risk_2,utility,time\n')
     fw.flush()
 
     # lexicographic optimization
@@ -369,16 +407,17 @@ with open('bi_objective.csv', 'w') as fw:
             f1 = m.getObjective().getValue()
 
             tau1, tau2, tau3, phi1, phi2, phi3, K2, K3, theta_all, theta2_all, theta3_all, A2, A3 = risks(I, K, V, A, m, i, hist, hist2, hist3)
-            smape1, smape2, smape3 = smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all)
+            mape1, mape2, mape3 = mape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all)
+            # smape1, smape2, smape3 = smape(I, K, K2, K3, A, A2, A3, theta_all, theta2_all, theta3_all)
 
-            fw.write(str(i) + ',' + str(f1) + ',' + str(epsilon) + ',' + "VER" + ',' + str(tau1) + ',' + str(phi1) + ',' + str(smape1) + ',' + str(time) + '\n')
-            fw.write(str(i) + ',' + str(f1) + ',' + str(epsilon) + ',' + "ER" + ',' + str(tau2) + ',' + str(phi2) + ',' + str(smape2) + ',' + str(time) + '\n')
-            fw.write(str(i) + ',' + str(f1) + ',' + str(epsilon) + ',' + "R" + ',' + str(tau3) + ',' + str(phi3) + ',' + str(smape3) + ',' + str(time) + '\n')
+            fw.write(str(i) + ',' + str(f1) + ',' + str(epsilon) + ',' + "VER" + ',' + str(tau1) + ',' + str(phi1) + ',' + str(1-mape1) + ',' + str(time) + '\n')
+            fw.write(str(i) + ',' + str(f1) + ',' + str(epsilon) + ',' + "ER" + ',' + str(tau2) + ',' + str(phi2) + ',' + str(1-mape2) + ',' + str(time) + '\n')
+            fw.write(str(i) + ',' + str(f1) + ',' + str(epsilon) + ',' + "R" + ',' + str(tau3) + ',' + str(phi3) + ',' + str(1-mape3) + ',' + str(time) + '\n')
             fw.flush()
 
-            # # theta
-            # filename = 'bi_obj_sols/lambda' + str(i) + '_eps' + str(j) + '.pickle'
-            # pickle.dump(theta_all, open(filename, "wb"))
+            # theta
+            filename = 'bi_obj_sols/lambda' + str(i) + '_eps' + str(j) + '.pickle'
+            pickle.dump(theta_all, open(filename, "wb"))
 
 
 # for i in r:

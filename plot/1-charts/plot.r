@@ -17,11 +17,12 @@ scm2.data$predicate <- factor(scm2.data$predicate, levels = c("VER", "ER", "R"))
 scm2.data$new <- paste(scm2.data$predicate, '_', scm2.data$coverage)
 
 f1 <- ggplot(data = scm1.data, aes(x=factor(lambda), y=risk_1, fill=new)) +
-  geom_point(aes(shape=new, color=new), size=2) +
+  geom_point(aes(shape=new, color=new, size=new)) +
   labs(y = expression("Disclosure Risk:" ~tau), x = "") +
   ylim(0, 0.1) +
   scale_shape_manual(values=c(3, 3, 16, 16, 17, 17)) +
-  scale_colour_manual(values=c("red", "green", "red", "green", "red", "green")) +
+  scale_colour_manual(values=c("black", "gray", "black", "gray", "black", "gray")) +
+  scale_size_manual(values=c(3, 2, 3, 2, 3, 2)) +
   theme_bw() + 
   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "cm"),
         strip.placement = "outside",
@@ -30,11 +31,12 @@ f1 <- ggplot(data = scm1.data, aes(x=factor(lambda), y=risk_1, fill=new)) +
 f1
 
 g1 <- ggplot(data = scm2.data, aes(x=factor(lambda), y=risk_1, fill=new)) +
-  geom_point(aes(shape=new, color=new), size=2) +
+  geom_point(aes(shape=new, color=new, size=new)) +
   labs(y = expression("Disclosure Risk:" ~tau), x = "") +
   ylim(0, 0.1) +
   scale_shape_manual(values=c(3, 3, 16, 16, 17, 17)) +
-  scale_colour_manual(values=c("red", "green", "red", "green", "red", "green")) +
+  scale_colour_manual(values=c("black", "gray", "black", "gray", "black", "gray")) +
+  scale_size_manual(values=c(3, 2, 3, 2, 3, 2)) +
   theme_bw() + 
   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "cm"),
         strip.placement = "outside",
@@ -43,11 +45,12 @@ g1 <- ggplot(data = scm2.data, aes(x=factor(lambda), y=risk_1, fill=new)) +
 g1
 
 f2 <- ggplot(data = scm1.data, aes(x=factor(lambda), y=smape, fill=new)) +
-  geom_point(aes(shape=new, color=new), size=2) + 
+  geom_point(aes(shape=new, color=new, size=new)) +
   labs(y = "SME", x = "") +
   ylim(0, 0.4) +
   scale_shape_manual(values=c(3, 3, 16, 16, 17, 17)) +
-  scale_colour_manual(values=c("red", "green", "red", "green", "red", "green")) +
+  scale_colour_manual(values=c("black", "gray", "black", "gray", "black", "gray")) +
+  scale_size_manual(values=c(3, 2, 3, 2, 3, 2)) +
   theme_bw() + 
   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "cm"),
         strip.placement = "outside",
@@ -56,11 +59,12 @@ f2 <- ggplot(data = scm1.data, aes(x=factor(lambda), y=smape, fill=new)) +
 f2
 
 g2 <- ggplot(data = scm2.data, aes(x=factor(lambda), y=smape, fill=new)) +
-  geom_point(aes(shape=new, color=new), size=2) + 
+  geom_point(aes(shape=new, color=new, size=new)) +
   labs(y = "SME", x = "") +
   ylim(0, 0.4) +
   scale_shape_manual(values=c(3, 3, 16, 16, 17, 17)) +
-  scale_colour_manual(values=c("red", "green", "red", "green", "red", "green")) +
+  scale_colour_manual(values=c("black", "gray", "black", "gray", "black", "gray")) +
+  scale_size_manual(values=c(3, 2, 3, 2, 3, 2)) +
   theme_bw() + 
   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "cm"),
         strip.placement = "outside",
@@ -76,12 +80,13 @@ mcm2.data$predicate <- factor(mcm2.data$predicate, levels = c("VER", "ER", "R"))
 mcm2.data$new <- paste(mcm2.data$predicate, '_', mcm2.data$coverage)
 
 f3 <- ggplot(data = mcm1.data, aes(x=u, y=risk_1, fill=new)) +
-  geom_point(aes(shape=new, color=new)) +
+  geom_point(aes(shape=new, color=new, size=new)) +
   labs(y = expression("Disclosure Risk:" ~tau), x = "") +
   ylim(0, 0.25) +
   facet_grid(cols=vars(lambda)) +
   scale_shape_manual(values=c(3, 3, 16, 16, 17, 17)) +
-  scale_colour_manual(values=c("red", "green", "red", "green", "red", "green")) +
+  scale_colour_manual(values=c("black", "gray", "black", "gray", "black", "gray")) +
+  scale_size_manual(values=c(3, 2, 3, 2, 3, 2)) +
   theme_bw() + 
   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "cm"),
         strip.placement = "outside",
@@ -90,12 +95,13 @@ f3 <- ggplot(data = mcm1.data, aes(x=u, y=risk_1, fill=new)) +
 f3 
 
 g3 <- ggplot(data = mcm2.data, aes(x=u, y=risk_1, fill=new)) +
-  geom_point(aes(shape=new, color=new)) +
+  geom_point(aes(shape=new, color=new, size=new)) +
   labs(y = expression("Disclosure Risk:" ~tau), x = "") +
   ylim(0, 0.25) +
   facet_grid(cols=vars(lambda)) +
   scale_shape_manual(values=c(3, 3, 16, 16, 17, 17)) +
-  scale_colour_manual(values=c("red", "green", "red", "green", "red", "green")) +
+  scale_colour_manual(values=c("black", "gray", "black", "gray", "black", "gray")) +
+  scale_size_manual(values=c(3, 2, 3, 2, 3, 2)) +
   theme_bw() + 
   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "cm"),
         strip.placement = "outside",
@@ -104,12 +110,13 @@ g3 <- ggplot(data = mcm2.data, aes(x=u, y=risk_1, fill=new)) +
 g3
 
 f4 <- ggplot(data = mcm1.data, aes(x=u, y=risk_2, fill=new)) +
-  geom_point(aes(shape=new, color=new)) +
+  geom_point(aes(shape=new, color=new, size=new)) +
   labs(y = expression("Disclosure Risk:" ~phi), x = "") +
   ylim(0, 0.15) +
   facet_grid(cols=vars(lambda)) +
   scale_shape_manual(values=c(3, 3, 16, 16, 17, 17)) +
-  scale_colour_manual(values=c("red", "green", "red", "green", "red", "green")) +
+  scale_colour_manual(values=c("black", "gray", "black", "gray", "black", "gray")) +
+  scale_size_manual(values=c(3, 2, 3, 2, 3, 2)) +
   theme_bw() + 
   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "cm"),
         strip.placement = "outside",
@@ -118,12 +125,13 @@ f4 <- ggplot(data = mcm1.data, aes(x=u, y=risk_2, fill=new)) +
 f4 
 
 g4 <- ggplot(data = mcm2.data, aes(x=u, y=risk_2, fill=new)) +
-  geom_point(aes(shape=new, color=new)) +
+  geom_point(aes(shape=new, color=new, size=new)) +
   labs(y = expression("Disclosure Risk:" ~phi), x = "") +
   ylim(0, 0.15) +
   facet_grid(cols=vars(lambda)) +
   scale_shape_manual(values=c(3, 3, 16, 16, 17, 17)) +
-  scale_colour_manual(values=c("red", "green", "red", "green", "red", "green")) +
+  scale_colour_manual(values=c("black", "gray", "black", "gray", "black", "gray")) +
+  scale_size_manual(values=c(3, 2, 3, 2, 3, 2)) +
   theme_bw() + 
   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "cm"),
         strip.placement = "outside",
@@ -131,43 +139,32 @@ g4 <- ggplot(data = mcm2.data, aes(x=u, y=risk_2, fill=new)) +
         panel.grid.major.y = element_blank())
 g4 
 
-# f5 <- ggplot(data = mcm1.data, aes(x=u, y=p_mape, fill=predicate)) +
-#   geom_line(aes(linetype=predicate, color=predicate)) +
-#   geom_point(aes(shape=predicate, color=predicate)) +
-#   labs(y = "p-MAPE", x = "") +
-#   facet_grid(coverage ~ lambda) +
-#   scale_colour_grey(start = 0.1, end = 0.8) +
-#   theme_bw() + 
-#   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "cm"),
-#         strip.placement = "outside",
-#         axis.text = element_text(size = 8),
-#         panel.grid.major.y = element_blank())
-# f5
-
-f6 <- ggplot(data = mcm1.data, aes(x=u, y=smape, fill=new)) +
-  geom_point(aes(shape=new, color=new)) +
+f5 <- ggplot(data = mcm1.data, aes(x=u, y=smape, fill=new)) +
+  geom_point(aes(shape=new, color=new, size=new)) +
   labs(y = "SME") +
   ylim(0, 0.3) +
   facet_grid(cols=vars(lambda)) +
   scale_shape_manual(values=c(3, 3, 16, 16, 17, 17)) +
-  scale_colour_manual(values=c("red", "green", "red", "green", "red", "green")) +
+  scale_colour_manual(values=c("black", "gray", "black", "gray", "black", "gray")) +
+  scale_size_manual(values=c(3, 2, 3, 2, 3, 2)) +
   theme_bw() + 
   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "cm"),
         strip.placement = "outside",
         axis.text = element_text(size = 8),
         panel.grid.major.y = element_blank())
-f6
+f5
 
-g6 <- ggplot(data = mcm2.data, aes(x=u, y=smape, fill=new)) +
-  geom_point(aes(shape=new, color=new)) +
+g5 <- ggplot(data = mcm2.data, aes(x=u, y=smape, fill=new)) +
+  geom_point(aes(shape=new, color=new, size=new)) +
   labs(y = "SME") +
   ylim(0, 0.3) +
   facet_grid(cols=vars(lambda)) +
   scale_shape_manual(values=c(3, 3, 16, 16, 17, 17)) +
-  scale_colour_manual(values=c("red", "green", "red", "green", "red", "green")) +
+  scale_colour_manual(values=c("black", "gray", "black", "gray", "black", "gray")) +
+  scale_size_manual(values=c(3, 2, 3, 2, 3, 2)) +
   theme_bw() + 
   theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, unit = "cm"),
         strip.placement = "outside",
         axis.text = element_text(size = 8),
         panel.grid.major.y = element_blank())
-g6
+g5
